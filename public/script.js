@@ -270,17 +270,17 @@ document.addEventListener('DOMContentLoaded', () => {
         'AMBATO': { nombre: 'Ambato', hex: '#4d7c0f', badge: '🍎' },
         'RIOBAMBA': { nombre: 'Riobamba', hex: '#334155', badge: '🚂' },
 
-        // === CAÑAR (Diferenciación térmica: Costa cálida vs Sierra fría) ===
+        // === CAÑAR (Estrictamente 2 colores: Costa cálida vs Sierra fría) ===
         'LA TRONCAL': { nombre: 'La Troncal', hex: '#ea580c', badge: '' },
         'CAÑAR': { nombre: 'Cañar', hex: '#1d4ed8', badge: '' },
         'CANAR': { nombre: 'Cañar', hex: '#1d4ed8', badge: '' },
-        'EL TAMBO': { nombre: 'El Tambo', hex: '#2563eb', badge: '' },
-        'AZOGUES': { nombre: 'Azogues', hex: '#400054', badge: '' },
-        'BIBLIAN': { nombre: 'Biblián', hex: '#0284c7', badge: '' },
-        'BIBLIÁN': { nombre: 'Biblián', hex: '#0284c7', badge: '' },
-        'DELEG': { nombre: 'Déleg', hex: '#0d9488', badge: '' },
-        'DÉLEG': { nombre: 'Déleg', hex: '#0d9488', badge: '' },
-        'SUSCAL': { nombre: 'Suscal', hex: '#4f46e5', badge: '' }
+        'EL TAMBO': { nombre: 'El Tambo', hex: '#1d4ed8', badge: '' },
+        'AZOGUES': { nombre: 'Azogues', hex: '#1d4ed8', badge: '' },
+        'BIBLIAN': { nombre: 'Biblián', hex: '#1d4ed8', badge: '' },
+        'BIBLIÁN': { nombre: 'Biblián', hex: '#1d4ed8', badge: '' },
+        'DELEG': { nombre: 'Déleg', hex: '#1d4ed8', badge: '' },
+        'DÉLEG': { nombre: 'Déleg', hex: '#1d4ed8', badge: '' },
+        'SUSCAL': { nombre: 'Suscal', hex: '#1d4ed8', badge: '' }
     };
 
     const COLORES_CANTON = {};
