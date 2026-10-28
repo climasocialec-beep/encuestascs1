@@ -270,17 +270,17 @@ document.addEventListener('DOMContentLoaded', () => {
         'AMBATO': { nombre: 'Ambato', hex: '#4d7c0f', badge: '🍎' },
         'RIOBAMBA': { nombre: 'Riobamba', hex: '#334155', badge: '🚂' },
 
-        // === CAÑAR ===
-        'AZOGUES': { nombre: 'Azogues', hex: '#400054', badge: '🏛️' },
-        'BIBLIAN': { nombre: 'Biblián', hex: '#0284c7', badge: '⛪' },
-        'BIBLIÁN': { nombre: 'Biblián', hex: '#0284c7', badge: '⛪' },
-        'CAÑAR': { nombre: 'Cañar', hex: '#d97706', badge: '🏺' },
-        'CANAR': { nombre: 'Cañar', hex: '#d97706', badge: '🏺' },
-        'LA TRONCAL': { nombre: 'La Troncal', hex: '#15803d', badge: '🎋' },
-        'EL TAMBO': { nombre: 'El Tambo', hex: '#7c3aed', badge: '🛤️' },
-        'DELEG': { nombre: 'Déleg', hex: '#0d9488', badge: '🌊' },
-        'DÉLEG': { nombre: 'Déleg', hex: '#0d9488', badge: '🌊' },
-        'SUSCAL': { nombre: 'Suscal', hex: '#ea580c', badge: '🌾' }
+        // === CAÑAR (Diferenciación térmica: Costa cálida vs Sierra fría) ===
+        'LA TRONCAL': { nombre: 'La Troncal', hex: '#ea580c', badge: '' },
+        'CAÑAR': { nombre: 'Cañar', hex: '#1d4ed8', badge: '' },
+        'CANAR': { nombre: 'Cañar', hex: '#1d4ed8', badge: '' },
+        'EL TAMBO': { nombre: 'El Tambo', hex: '#2563eb', badge: '' },
+        'AZOGUES': { nombre: 'Azogues', hex: '#400054', badge: '' },
+        'BIBLIAN': { nombre: 'Biblián', hex: '#0284c7', badge: '' },
+        'BIBLIÁN': { nombre: 'Biblián', hex: '#0284c7', badge: '' },
+        'DELEG': { nombre: 'Déleg', hex: '#0d9488', badge: '' },
+        'DÉLEG': { nombre: 'Déleg', hex: '#0d9488', badge: '' },
+        'SUSCAL': { nombre: 'Suscal', hex: '#4f46e5', badge: '' }
     };
 
     const COLORES_CANTON = {};
@@ -611,6 +611,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `https://www.google.com/maps/dir/?api=1&destination=${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`
             : '#';
 
+        // Pastilla altitudinal / térmica discreta y sobria (sin emojis)
+        const etiquetaClima = p.etiqueta_clima || (normTexto(canton) === 'LA TRONCAL' ? 'Costa · 110 msnm' : 'Sierra · 2.500 msnm');
+        const colorClima = p.color_clima || (normTexto(canton) === 'LA TRONCAL' ? '#c2410c' : '#1e40af');
+        const bgClima = p.bg_clima || (normTexto(canton) === 'LA TRONCAL' ? '#fff7ed' : '#eff6ff');
+        const borderClima = p.border_clima || (normTexto(canton) === 'LA TRONCAL' ? '#fed7aa' : '#bfdbfe');
+
         // 1. Configurar y Mostrar Barra Flotante de Navegación
         const barra = document.getElementById('barraSectorActivo');
         const titulo = document.getElementById('sectorActivoTitulo');
@@ -638,8 +644,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.05rem;color:${cColor};margin-bottom:2px;">
                             🎯 Punto #${etiq}
                         </div>
-                        <div style="font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:6px;">
+                        <div style="font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:4px;">
                             ${canton} · ${parroquia}
+                        </div>
+                        <div style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.70rem;font-weight:700;letter-spacing:0.02em;background:${bgClima};color:${colorClima};border:1px solid ${borderClima};margin-bottom:6px;">
+                            ${etiquetaClima}
                         </div>
                         ${puntoRef ? `<div style="font-size:0.75rem;color:#1e293b;background:#f8fafc;padding:6px 8px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:8px;text-align:left;line-height:1.35;font-weight:500;">📍 ${puntoRef}</div>` : ''}
                         <div style="font-size:0.75rem;color:#475569;margin-bottom:8px;">Cuota de Campo: <strong style="color:#0f172a;">${casos} encuestas</strong></div>
@@ -2901,7 +2910,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             'visibility': 'visible'
                         },
                         paint: {
-                            'text-color': EXPR_SECTORES_LABEL,
+                            'text-color': ['coalesce', ['get', 'color_clima'], EXPR_SECTORES_LABEL],
                             'text-halo-color': '#ffffff',
                             'text-halo-width': 3.0
                         }
