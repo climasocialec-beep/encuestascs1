@@ -268,7 +268,19 @@ document.addEventListener('DOMContentLoaded', () => {
         'CUENCA': { nombre: 'Cuenca', hex: '#b91c1c', badge: '⛲' },
         'LOJA': { nombre: 'Loja', hex: '#2563eb', badge: '🎵' },
         'AMBATO': { nombre: 'Ambato', hex: '#4d7c0f', badge: '🍎' },
-        'RIOBAMBA': { nombre: 'Riobamba', hex: '#334155', badge: '🚂' }
+        'RIOBAMBA': { nombre: 'Riobamba', hex: '#334155', badge: '🚂' },
+
+        // === CAÑAR ===
+        'AZOGUES': { nombre: 'Azogues', hex: '#400054', badge: '🏛️' },
+        'BIBLIAN': { nombre: 'Biblián', hex: '#0284c7', badge: '⛪' },
+        'BIBLIÁN': { nombre: 'Biblián', hex: '#0284c7', badge: '⛪' },
+        'CAÑAR': { nombre: 'Cañar', hex: '#d97706', badge: '🏺' },
+        'CANAR': { nombre: 'Cañar', hex: '#d97706', badge: '🏺' },
+        'LA TRONCAL': { nombre: 'La Troncal', hex: '#15803d', badge: '🎋' },
+        'EL TAMBO': { nombre: 'El Tambo', hex: '#7c3aed', badge: '🛤️' },
+        'DELEG': { nombre: 'Déleg', hex: '#0d9488', badge: '🌊' },
+        'DÉLEG': { nombre: 'Déleg', hex: '#0d9488', badge: '🌊' },
+        'SUSCAL': { nombre: 'Suscal', hex: '#ea580c', badge: '🌾' }
     };
 
     const COLORES_CANTON = {};
@@ -3241,6 +3253,10 @@ document.addEventListener('DOMContentLoaded', () => {
         map.on('mouseleave', 'puntos-layer', () => { map.getCanvas().style.cursor = ''; });
         map.on('mouseenter', 'sectores-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
         map.on('mouseleave', 'sectores-fill', () => { map.getCanvas().style.cursor = ''; });
+        if (map.getLayer('sectores-point')) {
+            map.on('mouseenter', 'sectores-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'sectores-point', () => { map.getCanvas().style.cursor = ''; });
+        }
 
         // Clic en Sector Censal
         const abrirPopupSector = (e) => {
@@ -3270,11 +3286,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         map.on('click', 'sectores-fill', abrirPopupSector);
+        if (map.getLayer('sectores-point')) {
+            map.on('click', 'sectores-point', abrirPopupSector);
+        }
 
         // Conectar botones para Prender / Apagar capas en el mapa
         const togglesMap = [
             { btn: UI.toggleParroquias, key: 'parroquias', layers: ['parroquias-fill', 'parroquias-line', 'parroquias-label'] },
-            { btn: UI.toggleSectores, key: 'sectores', layers: ['sectores-fill', 'sectores-line', 'sectores-label'] }
+            { btn: UI.toggleSectores, key: 'sectores', layers: ['sectores-fill', 'sectores-line', 'sectores-label', 'sectores-point'] }
         ];
 
         togglesMap.forEach(({ btn, key, layers }) => {
