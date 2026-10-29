@@ -1592,11 +1592,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     onClear: () => {
                         AppState.cantonSeleccionado = 'Todos';
                         if (UI.cantonFilter) UI.cantonFilter.value = 'Todos';
-                if (UI.circunscripcionFilter) {
-                    UI.circunscripcionFilter.value = 'Todas';
-                    UI.circunscripcionFilter.style.color = '';
-                    UI.circunscripcionFilter.style.fontWeight = '';
-                }
+                        if (UI.circunscripcionFilter) {
+                            UI.circunscripcionFilter.value = 'Todas';
+                            UI.circunscripcionFilter.style.color = '';
+                            UI.circunscripcionFilter.style.fontWeight = '';
+                        }
+                        AppState.parroquiaSeleccionada = 'Todas';
+                        AppState.sectorSeleccionado = 'Todos';
+                        if (UI.parroquiaFilter) UI.parroquiaFilter.value = 'Todas';
+                        if (UI.sectorFilter) UI.sectorFilter.value = 'Todos';
                         poblarFiltros();
                         renderizarVista(true, true);
                     }
@@ -2018,7 +2022,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (parActivaNorm && parroquia) {
                         const pNorm = normTexto(parroquia);
-                        if (!pNorm.includes(parActivaNorm) && !parActivaNorm.includes(pNorm)) {
+                        const matchPar = (pNorm === parActivaNorm)
+                            || (pNorm.split('/')[0].trim() === parActivaNorm)
+                            || (parActivaNorm.split('/')[0].trim() === pNorm);
+                        if (!matchPar) {
                             return;
                         }
                     }
@@ -2062,11 +2069,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalSectores = listaParaMostrar.length;
             let labelTodos = (AppState.parroquiaSeleccionada !== 'Todas') 
                 ? `Todos los sectores de ${AppState.parroquiaSeleccionada} (${totalSectores})`
-                : `Todos los sectores (${totalSectores})`;
+                : (AppState.cantonSeleccionado !== 'Todos'
+                    ? `Todos los sectores de ${AppState.cantonSeleccionado} (${totalSectores})`
+                    : `Todos los sectores (${totalSectores})`);
             if (AppState.filtroSoloPendientes) {
                 labelTodos = (AppState.parroquiaSeleccionada !== 'Todas')
                     ? `Sectores pendientes en ${AppState.parroquiaSeleccionada} (${totalSectores})`
-                    : `Todos los sectores pendientes (${totalSectores})`;
+                    : (AppState.cantonSeleccionado !== 'Todos'
+                        ? `Sectores pendientes en ${AppState.cantonSeleccionado} (${totalSectores})`
+                        : `Todos los sectores pendientes (${totalSectores})`);
             }
             UI.sectorFilter.innerHTML = `<option value="Todos">${labelTodos}</option>`;
 
@@ -2122,14 +2133,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (UI.parroquiaFilter) {
             const actualPar = AppState.parroquiaSeleccionada || 'Todas';
             const normStr = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+            const cantActivo = AppState.cantonSeleccionado || 'Todos';
 
-            // Mapeo preciso de cantidad de puntos/sectores de muestra por parroquia
+            // Mapeo preciso de cantidad de puntos/sectores de muestra por parroquia (estrictamente acotado al cantón seleccionado)
             const puntosPorParroquia = new Map();
             let totalPuntosMuestra = 0;
             if (AppState.sectoresGeojson && AppState.sectoresGeojson.features) {
                 AppState.sectoresGeojson.features.forEach(f => {
-                    const p = f.properties || {};
-                    const parNom = normStr(p.parroquia || p.PARROQUIA || '');
+                    const props = f.properties || {};
+                    const c = normStr(props.canton || props.CANTON || '');
+                    if (cantActivo !== 'Todos' && c && c !== normStr(cantActivo)) {
+                        return; // Omitir puntos de otros cantones
+                    }
+                    const parNom = normStr(props.parroquia || props.PARROQUIA || '');
                     if (parNom) {
                         puntosPorParroquia.set(parNom, (puntosPorParroquia.get(parNom) || 0) + 1);
                         totalPuntosMuestra++;
@@ -2143,35 +2159,31 @@ document.addEventListener('DOMContentLoaded', () => {
             UI.parroquiaFilter.innerHTML = `<option value="Todas">${lblTodas}</option>`;
             
             let parList = [];
-            const cantActivo = AppState.cantonSeleccionado;
-            const permitidasCanton = (cantActivo !== 'Todos' && PARROQUIAS_POR_CANTON[cantActivo]) ? PARROQUIAS_POR_CANTON[cantActivo].map(normStr) : null;
 
             if (AppState.parroquiasGeojson && AppState.parroquiasGeojson.features && AppState.parroquiasGeojson.features.length > 0) {
                 AppState.parroquiasGeojson.features.forEach(f => {
-                    const p = (f.properties.nombre || f.properties.PARROQUIA || f.properties.name || '').toUpperCase().trim();
-                    const c = (f.properties.canton || f.properties.CANTON || '').trim();
+                    const props = f.properties || {};
+                    const p = String(props.nombre || props.PARROQUIA || props.parroquia || props.name || '').trim().toUpperCase();
+                    const c = normStr(props.canton || props.CANTON || '');
                     
                     // Si hay cantón seleccionado, filtrar estrictamente para que solo queden las correspondientes a ese cantón
-                    if (permitidasCanton) {
-                        const targetCan = normStr(cantActivo);
-                        const normC = normStr(c);
-                        if (normC && normC !== targetCan && !normC.includes(targetCan) && !targetCan.includes(normC)) return;
-                        const normP = normStr(p);
-                        const coincideParroquia = permitidasCanton.includes(normP);
-                        if (!coincideParroquia) return;
+                    if (cantActivo !== 'Todos' && c && c !== normStr(cantActivo)) {
+                        return;
                     }
                     // Filtrar por Circunscripción seleccionada
-                    if (AppState.circunscripcionSeleccionada !== 'Todas') {
-                        const cPar = normCircunscripcion(f.properties.circunscripcion || f.properties.CIRCUNSCRIPCION || resolverCircunscripcionParroquia(p));
+                    if (AppState.circunscripcionSeleccionada && AppState.circunscripcionSeleccionada !== 'Todas') {
+                        const cPar = normCircunscripcion(props.circunscripcion || props.CIRCUNSCRIPCION || resolverCircunscripcionParroquia(p));
                         if (cPar !== normCircunscripcion(AppState.circunscripcionSeleccionada)) return;
                     }
                     if (p && !parList.includes(p)) parList.push(p);
                 });
             }
 
+            // Fallback desde PARROQUIAS_POR_CANTON si aún no se poblaron desde el GeoJSON
             if (parList.length === 0) {
-                if (permitidasCanton) {
-                    permitidasCanton.forEach(p => { if (!parList.includes(p)) parList.push(p); });
+                if (cantActivo !== 'Todos') {
+                    const parsCanton = PARROQUIAS_POR_CANTON[cantActivo] || [];
+                    parsCanton.forEach(p => { const up = p.toUpperCase().trim(); if (!parList.includes(up)) parList.push(up); });
                 } else {
                     Object.values(PARROQUIAS_POR_CANTON).forEach(pars => {
                         pars.forEach(p => { const up = p.toUpperCase().trim(); if (!parList.includes(up)) parList.push(up); });
@@ -2179,7 +2191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Si aún no hay parroquias en parList (o en caso de geometrías de muestra independientes), añadir las que tengan puntos de muestra
+            // Si hay puntos de muestra con nombres de parroquias no capturados en parList (dentro del ámbito activo), incorporarlos
             puntosPorParroquia.forEach((count, parNom) => {
                 if (!parList.some(item => normStr(item) === parNom)) {
                     parList.push(parNom);
@@ -2197,8 +2209,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 frag.appendChild(opt);
             });
             UI.parroquiaFilter.appendChild(frag);
-            UI.parroquiaFilter.value = parList.includes(actualPar) ? actualPar : 'Todas';
-            if (!parList.includes(actualPar) && actualPar !== 'Todas') AppState.parroquiaSeleccionada = 'Todas';
+            
+            const coincideActual = parList.includes(actualPar);
+            UI.parroquiaFilter.value = coincideActual ? actualPar : 'Todas';
+            if (!coincideActual && actualPar !== 'Todas') {
+                AppState.parroquiaSeleccionada = 'Todas';
+            }
         }
 
         // 4. Selector Fechas
@@ -2354,12 +2370,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Filtro por Parroquia (dinámica según sectores sorteados)
         if (AppState.parroquiaSeleccionada && AppState.parroquiaSeleccionada !== 'Todas') {
             const pNorm = normTexto(AppState.parroquiaSeleccionada);
+            const cantActivo = (AppState.cantonSeleccionado && AppState.cantonSeleccionado !== 'Todos') ? normTexto(AppState.cantonSeleccionado) : null;
             let numSectores = 0;
             if (AppState.sectoresGeojson && Array.isArray(AppState.sectoresGeojson.features)) {
                 numSectores = AppState.sectoresGeojson.features.filter(f => {
                     const props = f.properties || {};
                     const p = normTexto(props.parroquia || props.PARROQUIA || props.nom_par || '');
-                    return p === pNorm;
+                    const c = normTexto(props.canton || props.CANTON || '');
+                    const matchC = !cantActivo || !c || c === cantActivo;
+                    const matchP = (p === pNorm || p.split('/')[0].trim() === pNorm || pNorm.split('/')[0].trim() === p);
+                    return matchP && matchC;
                 }).length;
             }
             const metaParr = Math.max(10, (numSectores || 1) * 10);
@@ -3459,40 +3479,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Auto-sincronizar Cantón si está en 'Todos' y la parroquia pertenece a un cantón específico
-        if (nombre !== 'Todas') {
+        // Auto-sincronizar Cantón ÚNICAMENTE si está en 'Todos' y la parroquia pertenece a un cantón específico
+        if (nombre !== 'Todas' && (!AppState.cantonSeleccionado || AppState.cantonSeleccionado === 'Todos')) {
             const normP = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
             const targetP = normP(nombre);
-            // Búsqueda de cantón por coincidencia exacta primero para evitar colisión de nombres
             let cantonEncontrado = null;
+            
+            // 1. Búsqueda canónica en PARROQUIAS_POR_CANTON por coincidencia exacta
             for (const [can, pars] of Object.entries(PARROQUIAS_POR_CANTON)) {
                 if (pars.some(p => normP(p) === targetP)) {
                     cantonEncontrado = can;
                     break;
                 }
             }
-            // Fallback cuidadoso solo si no hubo coincidencia exacta
-            if (!cantonEncontrado) {
-                for (const [can, pars] of Object.entries(PARROQUIAS_POR_CANTON)) {
-                    if (pars.some(p => {
-                        const np = normP(p);
-                        // Prohibir match entre Rosario y Yunganza
-                        if ((np === 'ROSARIO' && targetP.includes('YUNGANZA')) || (targetP === 'ROSARIO' && np.includes('YUNGANZA'))) return false;
-                        return np.includes(targetP) || targetP.includes(np);
-                    })) {
-                        cantonEncontrado = can;
-                        break;
-                    }
+            // 2. Búsqueda en geometrías de parroquias
+            if (!cantonEncontrado && AppState.parroquiasGeojson && AppState.parroquiasGeojson.features) {
+                const feat = AppState.parroquiasGeojson.features.find(f => {
+                    const props = f.properties || {};
+                    const n = normP(props.nombre || props.PARROQUIA || props.parroquia || props.name || '');
+                    return n === targetP || n.split('/')[0].trim() === targetP || targetP.split('/')[0].trim() === n;
+                });
+                if (feat && (feat.properties.canton || feat.properties.CANTON)) {
+                    cantonEncontrado = String(feat.properties.canton || feat.properties.CANTON).trim().toUpperCase();
                 }
             }
-            if (cantonEncontrado) {
-                if (Object.keys(PARROQUIAS_POR_CANTON).length > 1) {
-                    AppState.cantonSeleccionado = cantonEncontrado;
-                    if (UI.cantonFilter) UI.cantonFilter.value = cantonEncontrado;
-                } else {
-                    AppState.cantonSeleccionado = 'Todos';
-                    if (UI.cantonFilter) UI.cantonFilter.value = 'Todos';
+            // 3. Búsqueda en sectores de muestra
+            if (!cantonEncontrado && AppState.sectoresGeojson && AppState.sectoresGeojson.features) {
+                const featS = AppState.sectoresGeojson.features.find(f => {
+                    const props = f.properties || {};
+                    const n = normP(props.parroquia || props.PARROQUIA || '');
+                    return n === targetP || n.split('/')[0].trim() === targetP || targetP.split('/')[0].trim() === n;
+                });
+                if (featS && (featS.properties.canton || featS.properties.CANTON)) {
+                    cantonEncontrado = String(featS.properties.canton || featS.properties.CANTON).trim().toUpperCase();
                 }
+            }
+
+            if (cantonEncontrado) {
+                AppState.cantonSeleccionado = cantonEncontrado;
+                if (UI.cantonFilter) UI.cantonFilter.value = cantonEncontrado;
             }
         }
 
@@ -3585,8 +3610,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const p = f.properties || {};
                 const par = norm(p.parroquia || p.PARROQUIA || '');
                 const c = norm(p.canton || p.CANTON || '');
-                const parMatch = (par === target || par.includes(target) || target.includes(par));
-                const canMatch = !cantActivo || !c || (c === cantActivo) || (c.includes(cantActivo)) || (cantActivo.includes(c));
+                const parMatch = (par === target || par.split('/')[0].trim() === target || target.split('/')[0].trim() === par);
+                const canMatch = !cantActivo || !c || (c === cantActivo);
                 if (parMatch && canMatch) {
                     const b = p.bbox || (f.geometry ? calcularBBOX(f.geometry) : null);
                     if (b) {
@@ -3617,8 +3642,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const p = f.properties || {};
                 const n = norm(p.nombre || p.PARROQUIA || p.name || '');
                 const c = norm(p.canton || p.CANTON || '');
-                const parMatch = (n === target || n.includes(target) || target.includes(n));
-                const canMatch = !cantActivo || !c || (c === cantActivo || c.includes(cantActivo) || cantActivo.includes(c));
+                const parMatch = (n === target || n.split('/')[0].trim() === target || target.split('/')[0].trim() === n);
+                const canMatch = !cantActivo || !c || (c === cantActivo);
                 return parMatch && canMatch;
             });
             if (feat) {
@@ -3642,7 +3667,7 @@ document.addEventListener('DOMContentLoaded', () => {
             AppState.sectoresGeojson.features.forEach(f => {
                 const p = f.properties || {};
                 const c = norm(p.canton || p.CANTON || '');
-                if (c && (c === target || c.includes(target) || target.includes(c))) {
+                if (c && c === target) {
                     const b = p.bbox || (f.geometry ? calcularBBOX(f.geometry) : null);
                     if (b) {
                         encontrados++;
@@ -3658,8 +3683,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             if (encontrados > 0 && minX !== Infinity) {
-                const dx = (maxX - minX) * 0.08 || 0.005;
-                const dy = (maxY - minY) * 0.08 || 0.005;
+                const dx = (maxX - minX) * 0.12 || 0.005;
+                const dy = (maxY - minY) * 0.12 || 0.005;
                 return [[minX - dx, minY - dy], [maxX + dx, maxY + dy]];
             }
         }
@@ -3671,7 +3696,7 @@ document.addEventListener('DOMContentLoaded', () => {
             AppState.parroquiasGeojson.features.forEach(f => {
                 const p = f.properties || {};
                 const c = norm(p.canton || p.CANTON || '');
-                if (c && (c === target || c.includes(target) || target.includes(c))) {
+                if (c && c === target) {
                     const b = p.bbox || (f.geometry ? calcularBBOX(f.geometry) : null);
                     if (b) {
                         encontrados++;
@@ -3687,7 +3712,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             if (encontrados > 0 && minX !== Infinity) {
-                return [[minX, minY], [maxX, maxY]];
+                const dx = (maxX - minX) * 0.12 || 0.005;
+                const dy = (maxY - minY) * 0.12 || 0.005;
+                return [[minX - dx, minY - dy], [maxX + dx, maxY + dy]];
             }
         }
 
@@ -3703,8 +3730,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (AppState.parroquiaSeleccionada && AppState.parroquiaSeleccionada !== 'Todas') {
                 const targetPar = String(AppState.parroquiaSeleccionada).trim().toUpperCase();
                 const variantesPar = [targetPar];
-                if (targetPar.includes('YUNGANZA')) {
-                    variantesPar.push('YUNGANZA / EL ROSARIO', 'YUNGANZA /EL ROSARIO');
+                if (targetPar.includes('/')) {
+                    targetPar.split('/').forEach(s => {
+                        const t = s.trim();
+                        if (t && !variantesPar.includes(t)) variantesPar.push(t);
+                    });
                 }
                 const matchParExpr = [
                     'in',
@@ -3750,13 +3780,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.setPaintProperty('parroquias-line', 'line-opacity', 1.0);
             } else if (AppState.cantonSeleccionado && AppState.cantonSeleccionado !== 'Todos') {
                 // Si está en 'Todas' las parroquias y 'Todas' las circunscripciones pero hay cantón seleccionado: mostrar las de ese cantón
-                const targetCanton = AppState.cantonSeleccionado;
-                const parsPermitidas = (PARROQUIAS_POR_CANTON[targetCanton] || []).map(p => p.toUpperCase().trim());
-                const filterParCanton = [
-                    'any',
-                    ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCanton.toUpperCase()],
-                    ['in', ['upcase', ['coalesce', ['get', 'nombre'], ['get', 'parroquia'], ['get', 'PARROQUIA'], '']], ['literal', parsPermitidas]]
-                ];
+                const targetCanton = AppState.cantonSeleccionado.toUpperCase();
+                const filterParCanton = ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCanton];
                 if (map.getLayer('parroquias-fill')) {
                     map.setFilter('parroquias-fill', filterParCanton);
                     map.setPaintProperty('parroquias-fill', 'fill-color', EXPR_PARROQUIAS_CIRC_FILL);
@@ -3826,30 +3851,46 @@ document.addEventListener('DOMContentLoaded', () => {
             if (AppState.parroquiaSeleccionada && AppState.parroquiaSeleccionada !== 'Todas') {
                 const targetPar = String(AppState.parroquiaSeleccionada).trim().toUpperCase();
                 const variantesPar = [targetPar];
-                if (targetPar.includes('YUNGANZA')) {
-                    variantesPar.push('YUNGANZA / EL ROSARIO', 'YUNGANZA /EL ROSARIO');
+                if (targetPar.includes('/')) {
+                    targetPar.split('/').forEach(s => {
+                        const t = s.trim();
+                        if (t && !variantesPar.includes(t)) variantesPar.push(t);
+                    });
                 }
-                baseTerritorialFilter = [
+                const matchParExpr = [
                     'in',
                     ['upcase', ['coalesce', ['get', 'parroquia'], ['get', 'PARROQUIA'], ['get', 'nombre'], '']],
                     ['literal', variantesPar]
                 ];
+                if (AppState.cantonSeleccionado && AppState.cantonSeleccionado !== 'Todos') {
+                    baseTerritorialFilter = [
+                        'all',
+                        ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], AppState.cantonSeleccionado.toUpperCase()],
+                        matchParExpr
+                    ];
+                } else {
+                    baseTerritorialFilter = matchParExpr;
+                }
             } else if (AppState.circunscripcionSeleccionada && AppState.circunscripcionSeleccionada !== 'Todas') {
                 const targetCirc = normCircunscripcion(AppState.circunscripcionSeleccionada);
                 const variantesCirc = obtenerVariantesCircunscripcion(AppState.circunscripcionSeleccionada);
-                baseTerritorialFilter = [
+                let filterCirc = [
                     'in',
                     ['upcase', ['coalesce', ['get', 'circunscripcion'], ['get', 'CIRCUNSCRIPCION'], '']],
                     ['literal', variantesCirc]
                 ];
+                if (AppState.cantonSeleccionado && AppState.cantonSeleccionado !== 'Todos') {
+                    baseTerritorialFilter = [
+                        'all',
+                        ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], AppState.cantonSeleccionado.toUpperCase()],
+                        filterCirc
+                    ];
+                } else {
+                    baseTerritorialFilter = filterCirc;
+                }
             } else if (AppState.cantonSeleccionado && AppState.cantonSeleccionado !== 'Todos') {
-                const targetCan = AppState.cantonSeleccionado;
-                const parsPermitidas = (PARROQUIAS_POR_CANTON[targetCan] || []).map(p => p.toUpperCase().trim());
-                baseTerritorialFilter = [
-                    'any',
-                    ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCan.toUpperCase()],
-                    ['in', ['upcase', ['coalesce', ['get', 'parroquia'], ['get', 'PARROQUIA'], '']], ['literal', parsPermitidas]]
-                ];
+                const targetCan = AppState.cantonSeleccionado.toUpperCase();
+                baseTerritorialFilter = ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCan];
             }
 
             const filterGeneral = (baseTerritorialFilter && filterPendientes)
