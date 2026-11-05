@@ -1,7 +1,7 @@
 {
-  "name": "Clima Social · Encuesta Cantonal Machala",
-  "short_name": "CS Machala",
-  "description": "Supervisión de campo para Encuesta Cantonal Machala 2026.",
+  "name": "Clima Social · Encuesta Quito PM3 2026",
+  "short_name": "CS Quito PM3",
+  "description": "Supervisión de campo en tiempo real para Encuesta Quito PM3 2026.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

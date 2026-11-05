@@ -2145,6 +2145,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (cantActivo !== 'Todos' && c && c !== normStr(cantActivo)) {
                         return; // Omitir puntos de otros cantones
                     }
+                    // Filtrar por Circunscripción seleccionada
+                    if (AppState.circunscripcionSeleccionada && AppState.circunscripcionSeleccionada !== 'Todas') {
+                        const cSec = normCircunscripcion(props.circunscripcion || props.CIRCUNSCRIPCION || resolverCircunscripcionParroquia(props.parroquia));
+                        if (cSec !== normCircunscripcion(AppState.circunscripcionSeleccionada)) {
+                            return;
+                        }
+                    }
                     const parNom = normStr(props.parroquia || props.PARROQUIA || '');
                     if (parNom) {
                         puntosPorParroquia.set(parNom, (puntosPorParroquia.get(parNom) || 0) + 1);
@@ -2153,9 +2160,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            const cInfoNom = (AppState.circunscripcionSeleccionada && AppState.circunscripcionSeleccionada !== 'Todas')
+                ? (PALETA_CIRCUNSCRIPCIONES[AppState.circunscripcionSeleccionada] || {}).nombre || AppState.circunscripcionSeleccionada
+                : '';
             const lblTodas = totalPuntosMuestra > 0 
-                ? `Todas las parroquias (${totalPuntosMuestra})` 
-                : 'Todas las parroquias';
+                ? (cInfoNom ? `Todas las parroquias (${cInfoNom} - ${totalPuntosMuestra})` : `Todas las parroquias (${totalPuntosMuestra})`)
+                : (cInfoNom ? `Todas las parroquias de ${cInfoNom}` : 'Todas las parroquias');
             UI.parroquiaFilter.innerHTML = `<option value="Todas">${lblTodas}</option>`;
             
             let parList = [];
@@ -2179,8 +2189,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Fallback desde PARROQUIAS_POR_CANTON si aún no se poblaron desde el GeoJSON
-            if (parList.length === 0) {
+            // Fallback desde PARROQUIAS_POR_CANTON únicamente si no hay circunscripción activa ni GeoJSON
+            if (parList.length === 0 && (!AppState.circunscripcionSeleccionada || AppState.circunscripcionSeleccionada === 'Todas')) {
                 if (cantActivo !== 'Todos') {
                     const parsCanton = PARROQUIAS_POR_CANTON[cantActivo] || [];
                     parsCanton.forEach(p => { const up = p.toUpperCase().trim(); if (!parList.includes(up)) parList.push(up); });
@@ -2191,7 +2201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Si hay puntos de muestra con nombres de parroquias no capturados en parList (dentro del ámbito activo), incorporarlos
+            // Si hay puntos de muestra con nombres de parroquias no capturados en parList (dentro de la circunscripción activa), incorporarlos
             puntosPorParroquia.forEach((count, parNom) => {
                 if (!parList.some(item => normStr(item) === parNom)) {
                     parList.push(parNom);
@@ -2509,20 +2519,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pre-cargar datos cartográficos (Ultra-optimizado para móviles Galaxy A01 Core)
         let parroquiasData = { type: 'FeatureCollection', features: [] };
         let sectoresData = { type: 'FeatureCollection', features: [] };
+        let circunscripcionesData = { type: 'FeatureCollection', features: [] };
 
         try {
-            const versionQuery = '?v=' + ((AppState.config && AppState.config.version) || '110.0.0');
-            const [resPar, resSec] = await Promise.all([
+            const versionQuery = '?v=' + ((AppState.config && AppState.config.version) || '2.0.0');
+            const [resPar, resSec, resCirc] = await Promise.all([
                 fetch('assets/parroquias.geojson' + versionQuery),
-                fetch('assets/sectores_censales.geojson' + versionQuery)
+                fetch('assets/sectores_censales.geojson' + versionQuery),
+                fetch('assets/circunscripciones.geojson' + versionQuery)
             ]);
             if (resPar.ok) parroquiasData = await resPar.json();
             if (resSec.ok) sectoresData = await resSec.json();
+            if (resCirc.ok) circunscripcionesData = await resCirc.json();
         } catch (e) {
             console.warn('[Mapa] Error pre-cargando GeoJSONs:', e);
         }
 
         AppState.cantonesGeojson = { type: 'FeatureCollection', features: [] };
+        AppState.circunscripcionesGeojson = circunscripcionesData;
         AppState.parroquiasGeojson = parroquiasData;
         AppState.sectoresGeojson = sectoresData;
         AppState.puntosMuestreoGeojson = { type: 'FeatureCollection', features: [] };
@@ -2785,6 +2799,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         maxzoom: 19,
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> colaboradores'
                     },
+                    'circunscripciones-source': {
+                        type: 'geojson',
+                        data: circunscripcionesData
+                    },
                     'parroquias-source': {
                         type: 'geojson',
                         data: parroquiasData
@@ -2811,6 +2829,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         maxzoom: 22
                     },
                     // 1. Límites y Relleno Parroquial por Circunscripción (Directriz Cantonal Clima Social)
+                    {
+                        id: 'circunscripciones-line',
+                        type: 'line',
+                        source: 'circunscripciones-source',
+                        paint: {
+                            'line-color': [
+                                'match',
+                                ['upcase', ['coalesce', ['get', 'circunscripcion'], ['get', 'CIRCUNSCRIPCION'], '']],
+                                'CIRCUNSCRIPCION URBANA 1', '#028090',
+                                'CIRCUNSCRIPCIÓN URBANA 1', '#028090',
+                                'CIRCUNSCRIPCION URBANA 2', '#7c3aed',
+                                'CIRCUNSCRIPCIÓN URBANA 2', '#7c3aed',
+                                'CIRCUNSCRIPCION URBANA 3', '#ea580c',
+                                'CIRCUNSCRIPCIÓN URBANA 3', '#ea580c',
+                                'CIRCUNSCRIPCION RURAL', '#059669',
+                                'CIRCUNSCRIPCIÓN RURAL', '#059669',
+                                '#028090'
+                            ],
+                            'line-width': [
+                                'interpolate', ['linear'], ['zoom'],
+                                8, 3.0,
+                                10, 3.8,
+                                12, 4.8,
+                                15, 6.0
+                            ],
+                            'line-opacity': 0.95
+                        }
+                    },
                     {
                         id: 'parroquias-fill',
                         type: 'fill',
@@ -3098,6 +3144,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function configurarCapasWebGL() {
         if (!map || !map.isStyleLoaded()) return;
 
+        if (AppState.circunscripcionesGeojson && map.getSource('circunscripciones-source')) {
+            map.getSource('circunscripciones-source').setData(AppState.circunscripcionesGeojson);
+        }
         if (AppState.parroquiasGeojson && map.getSource('parroquias-source')) {
             map.getSource('parroquias-source').setData(AppState.parroquiasGeojson);
         }
@@ -3112,7 +3161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Asegurar que las capas cartográficas estén explícitamente visibles
-        const capasBase = ['parroquias-fill', 'parroquias-line', 'parroquias-label', 'sectores-fill', 'sectores-line', 'sectores-label'];
+        const capasBase = ['circunscripciones-line', 'parroquias-fill', 'parroquias-line', 'parroquias-label', 'sectores-fill', 'sectores-line', 'sectores-label'];
         capasBase.forEach(ly => {
             if (map.getLayer(ly)) {
                 map.setLayoutProperty(ly, 'visibility', 'visible');
@@ -3774,6 +3823,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     map.setPaintProperty('parroquias-fill', 'fill-opacity', 0.28);
                 }
                 map.setFilter('parroquias-line', filterCirc);
+                if (map.getLayer('circunscripciones-line')) map.setFilter('circunscripciones-line', filterCirc);
                 if (map.getLayer('parroquias-label')) map.setFilter('parroquias-label', filterCirc);
                 map.setPaintProperty('parroquias-line', 'line-width', 3.0);
                 map.setPaintProperty('parroquias-line', 'line-color', EXPR_PARROQUIAS_CIRC_LINE);
@@ -3807,6 +3857,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     map.setPaintProperty('parroquias-fill', 'fill-opacity', 0.24);
                 }
                 map.setFilter('parroquias-line', null);
+                if (map.getLayer('circunscripciones-line')) map.setFilter('circunscripciones-line', null);
                 if (map.getLayer('parroquias-label')) map.setFilter('parroquias-label', null);
 
                 map.setPaintProperty('parroquias-line', 'line-width', [

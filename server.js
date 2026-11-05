@@ -324,13 +324,13 @@ async function obtenerDatosKobo() {
     const params = obtenerParametrosActivos();
     if (params.esStandby || !params.assetId || !params.apiToken) {
         return {
-            estado: params.esStandby ? "STANDBY" : "CONFIG_PENDIENTE",
+            estado: params.esStandby ? "STANDBY" : "ACTIVO",
             total: 0,
             resultados: [],
             obtenidoEn: Date.now(),
             mensaje: params.esStandby
                 ? "Terminal en reposo (Standby). Sin encuesta activa asignada."
-                : "Esperando configuración de credenciales Kobo."
+                : "En espera del formulario Kobo de Quito PM3 / inicio de campo."
         };
     }
 
