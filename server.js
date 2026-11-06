@@ -330,7 +330,7 @@ async function obtenerDatosKobo() {
             obtenidoEn: Date.now(),
             mensaje: params.esStandby
                 ? "Terminal en reposo (Standby). Sin encuesta activa asignada."
-                : "En espera del formulario Kobo de Quito PM3 / inicio de campo."
+                : "En espera del formulario Kobo de Quito Oct 2026 / inicio de campo."
         };
     }
 

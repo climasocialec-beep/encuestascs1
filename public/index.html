@@ -9,8 +9,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Panel de Supervisión de Campo en tiempo real — Clima Social Quito PM3 2026">
-  <title>Clima Social · Encuesta Quito PM3 2026</title>
+  <meta name="description" content="Panel de Supervisión de Campo en tiempo real — Clima Social Quito Oct 2026">
+  <title>Clima Social · Encuesta Quito Oct 2026</title>
   <link rel="icon" type="image/png" href="assets/icono.png">
   <link rel="manifest" href="manifest.webmanifest">
 
@@ -25,15 +25,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 
   <!-- Preload Cartografía Clave (Caché optimizada para móviles) -->
-  <link rel="preload" href="assets/circunscripciones.geojson?v=2.0.0" as="fetch" crossorigin>
-  <link rel="preload" href="assets/parroquias.geojson?v=2.0.0" as="fetch" crossorigin>
-  <link rel="preload" href="assets/sectores_censales.geojson?v=2.0.0" as="fetch" crossorigin>
+  <link rel="preload" href="assets/circunscripciones.geojson?v=2.1.0" as="fetch" crossorigin>
+  <link rel="preload" href="assets/parroquias.geojson?v=2.1.0" as="fetch" crossorigin>
+  <link rel="preload" href="assets/sectores_censales.geojson?v=2.1.0" as="fetch" crossorigin>
 
   <!-- MapLibre GL CSS (Aceleración WebGL Nativa en GPU) -->
   <link rel="stylesheet" href="libs/maplibre-gl.css" />
 
   <!-- Estilos del Dashboard -->
-  <link rel="stylesheet" href="style.css?v=2.0.0">
+  <link rel="stylesheet" href="style.css?v=2.1.0">
 </head>
 <body>
 
@@ -233,6 +233,19 @@
             <div class="cs-select-wrap">
               <select id="cantonFilter" class="cs-select">
                 <option value="Todos">Todos los cantones</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Circunscripción -->
+          <div class="cs-ribbon-field" id="wrapCircunscripcionFilter">
+            <label for="circunscripcionFilter" class="cs-field-label">
+              <svg class="cs-icon cs-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              <span>Circunscripción</span>
+            </label>
+            <div class="cs-select-wrap">
+              <select id="circunscripcionFilter" class="cs-select">
+                <option value="Todas">Todas las circunscripciones</option>
               </select>
             </div>
           </div>
@@ -508,10 +521,10 @@
 
   <!-- ===== SCRIPTS ===== -->
   <script src="libs/maplibre-gl.js"></script>
-  <script src="js/tipologias.js?v=2.0.0"></script>
-  <script src="js/kobo-parser.js?v=2.0.0"></script>
-  <script src="js/auditoria.js?v=2.0.0"></script>
-  <script src="script.js?v=2.0.0"></script>
+  <script src="js/tipologias.js?v=2.1.0"></script>
+  <script src="js/kobo-parser.js?v=2.1.0"></script>
+  <script src="js/auditoria.js?v=2.1.0"></script>
+  <script src="script.js?v=2.1.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       let refreshing = false;
@@ -527,13 +540,13 @@
         if ('caches' in window) {
           caches.keys().then(names => {
             names.forEach(name => {
-              if (name !== 'clima-social-quito-pm3-v2.0.0') {
+              if (name !== 'clima-social-quito-oct2026-v2.1.0') {
                 caches.delete(name);
               }
             });
           });
         }
-        navigator.serviceWorker.register('/service-worker.js?v=2.0.0').then(reg => {
+        navigator.serviceWorker.register('/service-worker.js?v=2.1.0').then(reg => {
           if (!reg) return;
           if (reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
