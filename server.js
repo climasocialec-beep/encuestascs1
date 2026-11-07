@@ -246,8 +246,13 @@ function normalizarEncuesta(raw, params) {
     const cantonDefecto = params.config.canton || "Territorio";
     const canton = params.choicesCantones[rawCanton] || (rawCanton ? String(rawCanton).trim() : cantonDefecto);
 
-    const rawCirc = extraerValor(raw, ["circunscripcion", "circ", "CIRCUNSCRIPCION"]) || "";
-    const CIRCUNSCRIPCIONES = { "1": "CIRCUNSCRIPCION URBANA 1", "2": "CIRCUNSCRIPCION URBANA 2", "3": "CIRCUNSCRIPCION RURAL" };
+    const rawCirc = extraerValor(raw, ["circunscripcion", "circuns", "circ", "CIRCUNSCRIPCION"]) || "";
+    const CIRCUNSCRIPCIONES = {
+        "1": "CIRCUNSCRIPCION URBANA 1",
+        "2": "CIRCUNSCRIPCION URBANA 2",
+        "3": "CIRCUNSCRIPCION URBANA 3",
+        "4": "CIRCUNSCRIPCION RURAL"
+    };
     const circunscripcion = CIRCUNSCRIPCIONES[rawCirc] || String(rawCirc).trim();
 
     const rawGen = extraerValor(raw, [
