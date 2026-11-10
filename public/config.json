@@ -1,6 +1,6 @@
 {
-  "estado": "ACTIVO",
-  "version": "2.2.1",
+  "estado": "STANDBY",
+  "version": "2.2.2",
   "proyecto": "Encuesta Quito Oct 2026",
   "canton": "QUITO",
   "provincia": "Pichincha",
