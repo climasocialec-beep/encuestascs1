@@ -546,7 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cantonFilter: document.getElementById('cantonFilter'),
         diaFilter: document.getElementById('diaFilter'),
         wrapDiaFilter: document.getElementById('wrapDiaFilter'),
-        trackingDayStrip: document.getElementById('trackingDayStrip'),
         circunscripcionFilter: document.getElementById('circunscripcionFilter'),
         wrapCircunscripcionFilter: document.getElementById('wrapCircunscripcionFilter'),
         sectorFilter: document.getElementById('sectorFilter'),
@@ -2066,30 +2065,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     UI.diaFilter.innerHTML = htmlDia;
                     UI.diaFilter.value = (actualDia === 'Todos' || diasOrdenados.includes(Number(actualDia))) ? String(actualDia) : 'Todos';
                 }
-                if (UI.trackingDayStrip) {
-                    UI.trackingDayStrip.style.display = 'flex';
-                    const actualDia = String(AppState.diaSeleccionado || 'Todos');
-                    let totalEncDias = 0;
-                    let totalMetaDias = 0;
-                    diasOrdenados.forEach(d => {
-                        totalEncDias += encPorDia.get(d) || 0;
-                        totalMetaDias += (mapaDias.get(d) || 0) * 10;
-                    });
-                    let stripHtml = `<button type="button" class="cs-tracking-day-pill ${actualDia === 'Todos' ? 'is-active' : ''}" data-dia="Todos">Todos <span class="cs-tracking-day-count">${totalEncDias}/${totalMetaDias}</span></button>`;
-                    diasOrdenados.forEach(d => {
-                        const secCnt = mapaDias.get(d) || 0;
-                        const metaDia = secCnt * 10;
-                        const avDia = encPorDia.get(d) || 0;
-                        const colorD = COLORES_DIA[d] || '#028090';
-                        const isComp = metaDia > 0 && avDia >= metaDia;
-                        const isAct = actualDia === String(d);
-                        stripHtml += `<button type="button" class="cs-tracking-day-pill ${isAct ? 'is-active' : ''} ${isComp ? 'is-complete' : ''}" data-dia="${d}"><span class="cs-tracking-day-dot" style="background:${colorD};"></span>D${d} <span class="cs-tracking-day-count">${avDia}/${metaDia}</span></button>`;
-                    });
-                    UI.trackingDayStrip.innerHTML = stripHtml;
-                }
             } else {
                 if (UI.wrapDiaFilter) UI.wrapDiaFilter.style.display = 'none';
-                if (UI.trackingDayStrip) UI.trackingDayStrip.style.display = 'none';
             }
         }
 
@@ -2772,7 +2749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tip = String(p.tipologia || p.TIPOLOGIA || '').trim().toUpperCase();
                 const diaNum = Number(p.dia || p.DIA || 0);
                 const etiq = p.etiqueta || p.ETIQUETA || p.etiquetaSC || (scNum && tip ? `${scNum} | ${tip}` : (scNum || tip));
-                const etiqMapa = diaNum > 0 ? `D${diaNum} · ${etiq}` : etiq;
+                const etiqMapa = etiq;
                 let coords = (f.geometry && f.geometry.type === 'Point') ? f.geometry.coordinates : p.centroid;
                 if (!coords || !Array.isArray(coords)) {
                     if (p.bbox && Array.isArray(p.bbox)) {
@@ -3944,6 +3921,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 0. Límites y Relleno Parroquial por Circunscripción
         if (map.getLayer('parroquias-line')) {
+            let filterParDia = null;
+            if (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos' && AppState.sectoresGeojson && AppState.sectoresGeojson.features) {
+                const targetDia = Number(AppState.diaSeleccionado);
+                const parNormsDia = new Set();
+                const parStringsDia = new Set();
+                AppState.sectoresGeojson.features.forEach(f => {
+                    const p = f.properties || {};
+                    if (Number(p.dia || p.DIA || 0) === targetDia) {
+                        const rawP = String(p.parroquia || p.PARROQUIA || '').trim();
+                        if (rawP) {
+                            parStringsDia.add(rawP.toUpperCase());
+                            parNormsDia.add(normTexto(rawP));
+                        }
+                    }
+                });
+                if (AppState.parroquiasGeojson && AppState.parroquiasGeojson.features) {
+                    AppState.parroquiasGeojson.features.forEach(f => {
+                        const p = f.properties || {};
+                        const cand = String(p.nombre || p.parroquia || p.PARROQUIA || '').trim();
+                        if (cand && parNormsDia.has(normTexto(cand))) {
+                            parStringsDia.add(cand.toUpperCase());
+                        }
+                    });
+                }
+                const listaParDia = parStringsDia.size > 0 ? Array.from(parStringsDia) : ['__NINGUNA__'];
+                filterParDia = [
+                    'in',
+                    ['upcase', ['coalesce', ['get', 'nombre'], ['get', 'parroquia'], ['get', 'PARROQUIA'], '']],
+                    ['literal', listaParDia]
+                ];
+            }
+
             // Si hay una parroquia específica seleccionada: AISLAR SOLO ESA PARROQUIA
             if (AppState.parroquiaSeleccionada && AppState.parroquiaSeleccionada !== 'Todas') {
                 const targetPar = String(AppState.parroquiaSeleccionada).trim().toUpperCase();
@@ -3986,6 +3995,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetCanton = AppState.cantonSeleccionado.toUpperCase();
                     filterCirc = ['all', ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCanton], filterCirc];
                 }
+                if (filterParDia) {
+                    filterCirc = ['all', filterCirc, filterParDia];
+                }
                 if (map.getLayer('parroquias-fill')) {
                     map.setFilter('parroquias-fill', filterCirc);
                     map.setPaintProperty('parroquias-fill', 'fill-color', EXPR_PARROQUIAS_CIRC_FILL);
@@ -4000,7 +4012,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (AppState.cantonSeleccionado && AppState.cantonSeleccionado !== 'Todos') {
                 // Si está en 'Todas' las parroquias y 'Todas' las circunscripciones pero hay cantón seleccionado: mostrar las de ese cantón
                 const targetCanton = AppState.cantonSeleccionado.toUpperCase();
-                const filterParCanton = ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCanton];
+                let filterParCanton = ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCanton];
+                if (filterParDia) {
+                    filterParCanton = ['all', filterParCanton, filterParDia];
+                }
                 if (map.getLayer('parroquias-fill')) {
                     map.setFilter('parroquias-fill', filterParCanton);
                     map.setPaintProperty('parroquias-fill', 'fill-color', EXPR_PARROQUIAS_CIRC_FILL);
@@ -4019,15 +4034,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.setPaintProperty('parroquias-line', 'line-color', EXPR_PARROQUIAS_CIRC_LINE);
                 map.setPaintProperty('parroquias-line', 'line-opacity', 1.0);
             } else {
-                // Vista global: todas las parroquias distinguidas por Circunscripción
+                // Vista global: todas las parroquias distinguidas por Circunscripción (o solo las del Día activo)
                 if (map.getLayer('parroquias-fill')) {
-                    map.setFilter('parroquias-fill', null);
+                    map.setFilter('parroquias-fill', filterParDia);
                     map.setPaintProperty('parroquias-fill', 'fill-color', EXPR_PARROQUIAS_CIRC_FILL);
                     map.setPaintProperty('parroquias-fill', 'fill-opacity', 0.24);
                 }
-                map.setFilter('parroquias-line', null);
-                if (map.getLayer('circunscripciones-line')) map.setFilter('circunscripciones-line', null);
-                if (map.getLayer('parroquias-label')) map.setFilter('parroquias-label', null);
+                map.setFilter('parroquias-line', filterParDia);
+                if (map.getLayer('circunscripciones-line')) map.setFilter('circunscripciones-line', filterParDia);
+                if (map.getLayer('parroquias-label')) map.setFilter('parroquias-label', filterParDia);
 
                 map.setPaintProperty('parroquias-line', 'line-width', [
                     'interpolate', ['linear'], ['zoom'],
@@ -5655,20 +5670,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 4.2 Filtro Día de Tracking (Dropdown + Pills)
+        // 4.2 Filtro Día de Tracking (Dropdown)
         if (UI.diaFilter) {
             UI.diaFilter.addEventListener('change', (e) => {
                 AppState.diaSeleccionado = e.target.value || 'Todos';
-                AppState.sectorSeleccionado = 'Todos';
-                poblarFiltros();
-                renderizarVista(false, true);
-            });
-        }
-        if (UI.trackingDayStrip) {
-            UI.trackingDayStrip.addEventListener('click', (e) => {
-                const pill = e.target.closest('.cs-tracking-day-pill');
-                if (!pill) return;
-                AppState.diaSeleccionado = pill.dataset.dia || 'Todos';
                 AppState.sectorSeleccionado = 'Todos';
                 poblarFiltros();
                 renderizarVista(false, true);
