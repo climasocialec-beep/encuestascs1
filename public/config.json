@@ -1,6 +1,6 @@
 {
   "estado": "ACTIVO",
-  "version": "2.3.5",
+  "version": "2.3.6",
   "proyecto": "Tracking Poll Quito Nov 2026",
   "canton": "QUITO",
   "provincia": "Pichincha",
@@ -97,14 +97,14 @@
   },
   "equipo": {
     "supervisores": {
-      "1": "David Schwarz",
-      "2": "Melina Toaquiza"
+      "1": { "nombre": "David Schwarz", "primerNombre": "David Schwarz" },
+      "2": { "nombre": "Melina Toaquiza", "primerNombre": "Melina Toaquiza" }
     },
     "encuestadores": {
-      "3": "Benjamín González",
-      "4": "Fidel Paredes",
-      "5": "Christian Vega",
-      "6": "Maria Gonzalez"
+      "3": { "nombre": "Benjamín González", "primerNombre": "Benjamín González", "supervisor": "1" },
+      "4": { "nombre": "Fidel Paredes", "primerNombre": "Fidel Paredes", "supervisor": "1" },
+      "5": { "nombre": "Christian Vega", "primerNombre": "Christian Vega", "supervisor": "2" },
+      "6": { "nombre": "Maria Gonzalez", "primerNombre": "Maria Gonzalez", "supervisor": "2" }
     }
   }
 }
