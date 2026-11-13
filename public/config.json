@@ -1,6 +1,6 @@
 {
   "estado": "ACTIVO",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "proyecto": "Tracking Poll Quito Nov 2026",
   "canton": "QUITO",
   "provincia": "Pichincha",
@@ -71,7 +71,10 @@
       "3100": "QUINCHE",
       "3325": "SAN ANTONIO",
       "4085": "TUMBACO",
-      "4290": "YARUQUI"
+      "4290": "YARUQUI",
+      "865": "CHECA",
+      "2055": "LA MERCED",
+      "4325": "ZAMBIZA"
     },
     "choices_tipologias": {
       "1": "A",
@@ -94,11 +97,14 @@
   },
   "equipo": {
     "supervisores": {
-      "1": "Supervisor 1",
-      "2": "Supervisor 2",
-      "3": "Supervisor 3",
-      "4": "Supervisor 4"
+      "1": "David Schwarz",
+      "2": "Melina Toaquiza"
     },
-    "encuestadores": {}
+    "encuestadores": {
+      "3": "Benjamín González",
+      "4": "Fidel Paredes",
+      "5": "Christian Vega",
+      "6": "Maria Gonzalez"
+    }
   }
 }
