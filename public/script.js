@@ -119,36 +119,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const sid = !isNaN(numOnly) ? String(numOnly) : raw;
         const miembro = EQUIPO_CAMPO[sid] || EQUIPO_CAMPO[raw];
         if (miembro && miembro.nombre) {
-            if (formato === 'completo') return `Encuestador ${sid} · ${miembro.nombre}`;
+            if (formato === 'completo') return `Enc ${sid} · ${miembro.nombre}`;
             if (formato === 'nombre') return miembro.nombre;
             if (formato === 'primerNombre') return miembro.primerNombre || miembro.nombre;
-            if (formato === 'busqueda') return `Encuestador ${sid} ${miembro.nombre}`;
-            return `Encuestador ${sid} · ${miembro.primerNombre || miembro.nombre}`;
+            if (formato === 'busqueda') return `Enc ${sid} ${miembro.nombre}`;
+            return `Enc ${sid} · ${miembro.primerNombre || miembro.nombre}`;
         }
         if (!isNaN(numOnly)) {
-            return `Encuestador ${sid}`;
+            return `Enc ${sid}`;
         }
-        return `Encuestador ${raw}`;
+        return `Enc ${raw}`;
     }
 
     function obtenerEtiquetaSupervisor(id, formato = 'corto') {
         const raw = String(id || '').trim();
-        if (!raw || raw === 'Sin asignar' || raw === 'undefined' || raw === 'null' || raw === '0') return formato === 'micro' ? 'Sin Sup' : 'Sin Supervisor';
+        if (!raw || raw === 'Sin asignar' || raw === 'undefined' || raw === 'null' || raw === '0') return formato === 'micro' ? 'Sin Sup' : 'Sin Sup';
         const numOnly = parseInt(raw, 10);
         const sid = !isNaN(numOnly) ? String(numOnly) : raw;
         const miembro = SUPERVISORES_CAMPO[sid] || SUPERVISORES_CAMPO[raw];
         if (miembro && miembro.nombre) {
-            if (formato === 'completo') return `Supervisor ${sid} · ${miembro.nombre}`;
-            if (formato === 'micro') return `Supervisor ${sid}`;
+            if (formato === 'completo') return `Sup ${sid} · ${miembro.nombre}`;
+            if (formato === 'micro') return `Sup ${sid}`;
             if (formato === 'nombre') return miembro.nombre;
             if (formato === 'primerNombre') return miembro.primerNombre || miembro.nombre;
-            if (formato === 'busqueda') return `Supervisor ${sid} ${miembro.nombre}`;
-            return `Supervisor ${sid} · ${miembro.primerNombre || miembro.nombre}`;
+            if (formato === 'busqueda') return `Sup ${sid} ${miembro.nombre}`;
+            return `Sup ${sid} · ${miembro.primerNombre || miembro.nombre}`;
         }
         if (!isNaN(numOnly)) {
-            return `Supervisor ${sid}`;
+            return `Sup ${sid}`;
         }
-        return `Supervisor ${raw}`;
+        return `Sup ${raw}`;
     }
 
     // Paleta cromática distintiva de alto contraste para Encuestadores (excluye Teal #0d9488 de Muestreo)

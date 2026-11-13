@@ -1,14 +1,14 @@
 /* Modo de contingencia Clima Social: conserva aplicación base y cartografía.
  * No almacena respuestas de Kobo ni coordenadas de encuestas en el teléfono. */
-const CACHE_NAME = 'clima-social-quito-oct2026-v2.3.6';
+const CACHE_NAME = 'clima-social-quito-oct2026-v2.3.7';
 const APP_SHELL = [
   '/',
   '/index.html',
-  '/style.css?v=2.3.6',
-  '/js/tipologias.js?v=2.3.6',
-  '/js/kobo-parser.js?v=2.3.6',
-  '/js/auditoria.js?v=2.3.6',
-  '/script.js?v=2.3.6',
+  '/style.css?v=2.3.7',
+  '/js/tipologias.js?v=2.3.7',
+  '/js/kobo-parser.js?v=2.3.7',
+  '/js/auditoria.js?v=2.3.7',
+  '/script.js?v=2.3.7',
   '/libs/maplibre-gl.js',
   '/libs/maplibre-gl.css',
   '/assets/icono.png',
