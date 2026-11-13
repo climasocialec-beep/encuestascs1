@@ -25,15 +25,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 
   <!-- Preload Cartografía Clave (Caché optimizada para móviles) -->
-  <link rel="preload" href="assets/circunscripciones.geojson?v=2.3.2" as="fetch" crossorigin>
-  <link rel="preload" href="assets/parroquias.geojson?v=2.3.2" as="fetch" crossorigin>
-  <link rel="preload" href="assets/sectores_censales.geojson?v=2.3.2" as="fetch" crossorigin>
+  <link rel="preload" href="assets/circunscripciones.geojson?v=2.3.3" as="fetch" crossorigin>
+  <link rel="preload" href="assets/parroquias.geojson?v=2.3.3" as="fetch" crossorigin>
+  <link rel="preload" href="assets/sectores_censales.geojson?v=2.3.3" as="fetch" crossorigin>
 
   <!-- MapLibre GL CSS (Aceleración WebGL Nativa en GPU) -->
   <link rel="stylesheet" href="libs/maplibre-gl.css" />
 
   <!-- Estilos del Dashboard -->
-  <link rel="stylesheet" href="style.css?v=2.3.2">
+  <link rel="stylesheet" href="style.css?v=2.3.3">
 </head>
 <body>
 
@@ -143,7 +143,7 @@
         </div>
         <div class="cs-kpi-bottom">
           <span class="cs-kpi-badge">Total Recolectadas</span>
-          <span class="cs-kpi-sub" id="kpiMeta">Meta: 700 (Cañar)</span>
+          <span class="cs-kpi-sub" id="kpiMeta">Meta: 2,550 (Quito)</span>
         </div>
         <div class="cs-progress-bar"><div class="cs-progress-bar__fill" id="barraAvance" style="width:0%"></div></div>
       </div>
@@ -189,7 +189,7 @@
         </div>
         <div class="cs-kpi-bottom">
           <span class="cs-kpi-badge" id="kpiTituloAvance">Avance General</span>
-          <span class="cs-kpi-sub" id="kpiSubAvance">Cumplimiento cantonal (500)</span>
+          <span class="cs-kpi-sub" id="kpiSubAvance">Cumplimiento cantonal (2,550)</span>
         </div>
       </div>
 
@@ -348,13 +348,13 @@
             <div class="cs-map-top-row">
               <!-- Barra Flotante de Control de Capas (Prender y Apagar) -->
               <div class="cs-map-layer-toggles" id="mapLayerToggles" aria-label="Capas del Mapa">
-                <button type="button" class="cs-layer-pill active" id="toggleParroquias" data-layer-group="parroquias" title="Límites Parroquiales de Estudio (9)">
+                <button type="button" class="cs-layer-pill active" id="toggleParroquias" data-layer-group="parroquias" title="Límites Parroquiales de Estudio (51)">
                   <span class="cs-layer-pill__dot" style="background: #2563eb;"></span>
-                  <span id="lblToggleParroquias">Parroquias (9)</span>
+                  <span id="lblToggleParroquias">Parroquias (51)</span>
                 </button>
-                <button type="button" class="cs-layer-pill active" id="toggleSectores" data-layer-group="sectores" title="Sectores Censales Sorteados (50)">
+                <button type="button" class="cs-layer-pill active" id="toggleSectores" data-layer-group="sectores" title="Sectores Censales Sorteados (255)">
                   <span class="cs-layer-pill__dot" style="background: #3b82f6;"></span>
-                  <span id="lblToggleSectores">Sectores (50)</span>
+                  <span id="lblToggleSectores">Sectores (255)</span>
                 </button>
                 <button type="button" class="cs-layer-pill cs-layer-pill--pendientes" id="toggleSoloPendientes" title="Filtrar únicamente sectores pendientes de completar (<10 encuestas)">
                   <span class="cs-layer-pill__dot" style="background: #f59e0b;"></span>
@@ -534,10 +534,10 @@
 
   <!-- ===== SCRIPTS ===== -->
   <script src="libs/maplibre-gl.js"></script>
-  <script src="js/tipologias.js?v=2.3.2"></script>
-  <script src="js/kobo-parser.js?v=2.3.2"></script>
-  <script src="js/auditoria.js?v=2.3.2"></script>
-  <script src="script.js?v=2.3.2"></script>
+  <script src="js/tipologias.js?v=2.3.3"></script>
+  <script src="js/kobo-parser.js?v=2.3.3"></script>
+  <script src="js/auditoria.js?v=2.3.3"></script>
+  <script src="script.js?v=2.3.3"></script>
   <script>
     if ('serviceWorker' in navigator) {
       let refreshing = false;
@@ -553,13 +553,13 @@
         if ('caches' in window) {
           caches.keys().then(names => {
             names.forEach(name => {
-              if (name !== 'clima-social-quito-oct2026-v2.3.2') {
+              if (name !== 'clima-social-quito-oct2026-v2.3.3') {
                 caches.delete(name);
               }
             });
           });
         }
-        navigator.serviceWorker.register('/service-worker.js?v=2.3.2').then(reg => {
+        navigator.serviceWorker.register('/service-worker.js?v=2.3.3').then(reg => {
           if (!reg) return;
           if (reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });

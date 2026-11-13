@@ -2806,6 +2806,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         AppState.puntosMuestreoMap = AppState.sectoresMap;
 
+        const nParTotal = (parroquiasData.features || []).length;
+        const nSecTotal = (sectoresData.features || []).length;
+        const lblPar = document.getElementById('lblToggleParroquias');
+        const lblSec = document.getElementById('lblToggleSectores');
+        if (lblPar) lblPar.textContent = `Parroquias (${nParTotal})`;
+        if (lblSec) lblSec.textContent = `Sectores (${nSecTotal})`;
+        if (UI.toggleParroquias) UI.toggleParroquias.title = `Límites Parroquiales de Estudio (${nParTotal})`;
+        if (UI.toggleSectores) UI.toggleSectores.title = `Sectores Censales Sorteados (${nSecTotal})`;
+
         // Crear colección de centroides puntuales para etiquetas únicas de parroquias (evita duplicación por teselado en MapLibre)
         const parroquiasCentroidesData = {
             type: 'FeatureCollection',
@@ -3951,6 +3960,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     ['upcase', ['coalesce', ['get', 'nombre'], ['get', 'parroquia'], ['get', 'PARROQUIA'], '']],
                     ['literal', listaParDia]
                 ];
+
+                // Actualizar contadores de cápsulas de capas para el día seleccionado
+                const nSecDia = AppState.sectoresGeojson.features.filter(f => Number((f.properties || {}).dia || (f.properties || {}).DIA || 0) === targetDia).length;
+                const lblPar = document.getElementById('lblToggleParroquias');
+                const lblSec = document.getElementById('lblToggleSectores');
+                if (lblPar) lblPar.textContent = `Parroquias (${parNormsDia.size})`;
+                if (lblSec) lblSec.textContent = `Sectores (${nSecDia})`;
+            } else {
+                const nParTotal = (AppState.parroquiasGeojson && AppState.parroquiasGeojson.features) ? AppState.parroquiasGeojson.features.length : 0;
+                const nSecTotal = (AppState.sectoresGeojson && AppState.sectoresGeojson.features) ? AppState.sectoresGeojson.features.length : 0;
+                const lblPar = document.getElementById('lblToggleParroquias');
+                const lblSec = document.getElementById('lblToggleSectores');
+                if (lblPar && nParTotal > 0) lblPar.textContent = `Parroquias (${nParTotal})`;
+                if (lblSec && nSecTotal > 0) lblSec.textContent = `Sectores (${nSecTotal})`;
             }
 
             // Si hay una parroquia específica seleccionada: AISLAR SOLO ESA PARROQUIA
