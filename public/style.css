@@ -3829,3 +3829,63 @@ body.modo-oscuro .maplibregl-ctrl-group button:hover {
   background-color: rgba(51, 65, 85, 1) !important;
 }
 
+
+/* ===== TIRA RÁPIDA DE DÍAS DE TRACKING (D1-D15) ===== */
+.cs-tracking-day-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  margin-top: 6px;
+}
+.cs-tracking-day-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.cs-tracking-day-pill:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
+}
+.cs-tracking-day-pill.is-active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+.cs-tracking-day-pill.is-complete {
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+}
+.cs-tracking-day-pill.is-complete.is-active {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}
+.cs-tracking-day-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.cs-tracking-day-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  opacity: 0.85;
+}

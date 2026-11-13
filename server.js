@@ -227,7 +227,7 @@ function normalizarEncuesta(raw, params) {
     const campoEnc = params.campoEnc;
     const campoSup = params.campoSup;
 
-    let encuestador = extraerValor(raw, [campoEnc, "cenc", "codenc", "codencu", "cod_encu", "cod_enc", "C_digo_encuestador", "encuestador", "cod_encuestador"]);
+    let encuestador = extraerValor(raw, [campoEnc, "cencu", "cenc", "codenc", "codencu", "cod_encu", "cod_enc", "C_digo_encuestador", "encuestador", "cod_encuestador"]);
     let supervisor = extraerValor(raw, [campoSup, "csup", "codsup", "cod_sup", "C_digo_Supervisor", "supervisor", "cod_supervisor"]);
 
     const rawConsen = extraerValor(raw, ["consent", "consen", "consentimiento", "acepta"]);
@@ -239,7 +239,7 @@ function normalizarEncuesta(raw, params) {
     const tipologia = params.choicesTipologias[rawTipol] || rawTipol.toUpperCase();
     const barrio = extraerValor(raw, ["barrio", "barr", "BARRIO_O_SECTOR", "sector", "barrio_sector"]);
 
-    const rawParroquia = extraerValor(raw, ["parroquia", "PARROQUIA", "nom_parroquia", "parr"]) || "";
+    const rawParroquia = extraerValor(raw, ["parroquia_001", "parroquia", "PARROQUIA", "nom_parroquia", "parr"]) || "";
     const parroquia = params.choicesParroquias[rawParroquia] || String(rawParroquia).trim().toUpperCase();
 
     const rawCanton = extraerValor(raw, ["canton", "CANTON", "canton_nombre", "nom_can", "nom_canton"]) || "";

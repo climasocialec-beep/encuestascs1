@@ -59,6 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
         supervisorSeleccionado: 'Todos',
         cantonSeleccionado: 'Todos',
         circunscripcionSeleccionada: 'Todas',
+        diaSeleccionado: 'Todos',
+        diasDisponibles: [],
         sectorSeleccionado: 'Todos',
         parroquiaSeleccionada: 'Todas',
         fechaSeleccionada: 'Todas',
@@ -484,6 +486,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const EXPR_CANTON_SECTORES_LINE = EXPR_SECTORES_LINE;
     const EXPR_CANTON_SECTORES_LABEL = EXPR_SECTORES_LABEL;
 
+    // Paleta diferenciada de 15 días para Tracking Poll (alto contraste sobre mapa satelital)
+    const COLORES_DIA = {
+        1: '#2563eb',  2: '#e11d48',  3: '#059669',  4: '#d97706',  5: '#7c3aed',
+        6: '#0891b2',  7: '#db2777',  8: '#65a30d',  9: '#ea580c', 10: '#4f46e5',
+        11: '#0d9488', 12: '#b91c1c', 13: '#ca8a04', 14: '#9333ea', 15: '#0284c7'
+    };
+
+    function generarExprDiaSector(fallback) {
+        const expr = ['match', ['to-number', ['coalesce', ['get', 'dia'], 0]]];
+        Object.keys(COLORES_DIA).forEach(d => {
+            expr.push(Number(d), COLORES_DIA[d]);
+        });
+        expr.push(fallback);
+        return expr;
+    }
+
+    const EXPR_SECTORES_DIA_COLOR = generarExprDiaSector('#028090');
+
     function obtenerColorEncuestador(enc) {
         if (enc === undefined || enc === null || enc === '') return '#64748b';
         const str = String(enc).trim();
@@ -524,6 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Filtros Cruzados
         supervisorFilter: document.getElementById('supervisorFilter'),
         cantonFilter: document.getElementById('cantonFilter'),
+        diaFilter: document.getElementById('diaFilter'),
+        wrapDiaFilter: document.getElementById('wrapDiaFilter'),
+        trackingDayStrip: document.getElementById('trackingDayStrip'),
         circunscripcionFilter: document.getElementById('circunscripcionFilter'),
         wrapCircunscripcionFilter: document.getElementById('wrapCircunscripcionFilter'),
         sectorFilter: document.getElementById('sectorFilter'),
@@ -586,6 +609,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const canton = sectorMeta.canton || p.canton || p.CANTON || '';
         const puntoRef = p.punto_referencial || p.PUNTO_REFERENCIAL || '';
         const casos = p.casos || p.CASOS || 10;
+        const diaNum = Number(p.dia || 0);
+        const diaPrefijo = diaNum > 0 ? `Día ${diaNum} · ` : '';
 
         let lng = null, lat = null;
         if (coordsExplicit && typeof coordsExplicit.lng === 'number' && typeof coordsExplicit.lat === 'number') {
@@ -622,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const titulo = document.getElementById('sectorActivoTitulo');
         const btnGmaps = document.getElementById('btnRutaGoogleMaps');
         if (barra && titulo && btnGmaps) {
-            titulo.textContent = `Punto #${etiq}${puntoRef ? ` · ${puntoRef}` : ` (${parroquia})`}`;
+            titulo.textContent = `${diaPrefijo}Sector ${etiq}${puntoRef ? ` · ${puntoRef}` : ` (${parroquia})`}`;
             btnGmaps.href = gmapsUrl;
             barra.style.display = 'inline-flex';
         }
@@ -642,7 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .setHTML(`
                     <div style="font-family:'Inter',sans-serif;padding:6px 8px;min-width:220px;text-align:center;">
                         <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.05rem;color:${cColor};margin-bottom:2px;">
-                            🎯 Punto #${etiq}
+                            🎯 ${diaPrefijo}Sector ${etiq}
                         </div>
                         <div style="font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:4px;">
                             ${canton} · ${parroquia}
@@ -1644,6 +1669,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
+        if (UI.diaFilter) {
+            const isActDia = AppState.diaSeleccionado !== 'Todos';
+            UI.diaFilter.classList.toggle('is-active', isActDia);
+            if (isActDia) {
+                activeCount++;
+                chips.push({
+                    tipo: 'dia',
+                    label: `Día ${AppState.diaSeleccionado}`,
+                    onClear: () => {
+                        AppState.diaSeleccionado = 'Todos';
+                        AppState.sectorSeleccionado = 'Todos';
+                        if (UI.diaFilter) UI.diaFilter.value = 'Todos';
+                        if (UI.sectorFilter) UI.sectorFilter.value = 'Todos';
+                        poblarFiltros();
+                        renderizarVista(true, true);
+                    }
+                });
+            }
+        }
+
         // Sincronizar Botones Rápidos de Fecha (Pills)
         if (UI.datePills && UI.datePills.length > 0) {
             UI.datePills.forEach(pill => {
@@ -1989,6 +2034,65 @@ document.addEventListener('DOMContentLoaded', () => {
             UI.cantonFilter.value = validCantones.includes(actualCan) ? actualCan : 'Todos';
         }
 
+        // 2a-bis. Selector Día de Tracking (D1..D15) y Tira Rápida
+        if (AppState.sectoresGeojson && AppState.sectoresGeojson.features) {
+            const mapaDias = new Map();
+            const encPorDia = new Map();
+            AppState.sectoresGeojson.features.forEach(f => {
+                const p = f.properties || {};
+                const dNum = Number(p.dia || p.DIA || 0);
+                if (dNum > 0) {
+                    mapaDias.set(dNum, (mapaDias.get(dNum) || 0) + 1);
+                    const scK = p.sc_key || `${p.canton || 'QUITO'}_${p.num_muestra || p.sc}`;
+                    const cnt = (AppState.conteoPorSector && (AppState.conteoPorSector.get(scK) || AppState.conteoPorSector.get(String(p.sc)))) || 0;
+                    encPorDia.set(dNum, (encPorDia.get(dNum) || 0) + cnt);
+                }
+            });
+            const diasOrdenados = Array.from(mapaDias.keys()).sort((a, b) => a - b);
+            AppState.diasDisponibles = diasOrdenados;
+
+            if (diasOrdenados.length > 0) {
+                if (UI.wrapDiaFilter) UI.wrapDiaFilter.style.display = '';
+                if (UI.diaFilter) {
+                    const actualDia = AppState.diaSeleccionado || 'Todos';
+                    const totalSecDias = AppState.sectoresGeojson.features.length;
+                    let htmlDia = `<option value="Todos">Todos los días (${totalSecDias} sec.)</option>`;
+                    diasOrdenados.forEach(d => {
+                        const secCnt = mapaDias.get(d) || 0;
+                        const metaDia = secCnt * 10;
+                        const avDia = encPorDia.get(d) || 0;
+                        htmlDia += `<option value="${d}">Día ${d} (${secCnt} sec. · ${avDia}/${metaDia})</option>`;
+                    });
+                    UI.diaFilter.innerHTML = htmlDia;
+                    UI.diaFilter.value = (actualDia === 'Todos' || diasOrdenados.includes(Number(actualDia))) ? String(actualDia) : 'Todos';
+                }
+                if (UI.trackingDayStrip) {
+                    UI.trackingDayStrip.style.display = 'flex';
+                    const actualDia = String(AppState.diaSeleccionado || 'Todos');
+                    let totalEncDias = 0;
+                    let totalMetaDias = 0;
+                    diasOrdenados.forEach(d => {
+                        totalEncDias += encPorDia.get(d) || 0;
+                        totalMetaDias += (mapaDias.get(d) || 0) * 10;
+                    });
+                    let stripHtml = `<button type="button" class="cs-tracking-day-pill ${actualDia === 'Todos' ? 'is-active' : ''}" data-dia="Todos">Todos <span class="cs-tracking-day-count">${totalEncDias}/${totalMetaDias}</span></button>`;
+                    diasOrdenados.forEach(d => {
+                        const secCnt = mapaDias.get(d) || 0;
+                        const metaDia = secCnt * 10;
+                        const avDia = encPorDia.get(d) || 0;
+                        const colorD = COLORES_DIA[d] || '#028090';
+                        const isComp = metaDia > 0 && avDia >= metaDia;
+                        const isAct = actualDia === String(d);
+                        stripHtml += `<button type="button" class="cs-tracking-day-pill ${isAct ? 'is-active' : ''} ${isComp ? 'is-complete' : ''}" data-dia="${d}"><span class="cs-tracking-day-dot" style="background:${colorD};"></span>D${d} <span class="cs-tracking-day-count">${avDia}/${metaDia}</span></button>`;
+                    });
+                    UI.trackingDayStrip.innerHTML = stripHtml;
+                }
+            } else {
+                if (UI.wrapDiaFilter) UI.wrapDiaFilter.style.display = 'none';
+                if (UI.trackingDayStrip) UI.trackingDayStrip.style.display = 'none';
+            }
+        }
+
         // 2b. Selector Sectores Censales
         if (UI.sectorFilter) {
             const actualSec = AppState.sectorSeleccionado || 'Todos';
@@ -2004,6 +2108,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const parroquia = String(p.parroquia || p.PARROQUIA || '').trim();
                     const canton = String(p.canton || p.CANTON || '').trim();
                     const scKey = p.sc_key || `${canton}_${scNum}`;
+                    const diaNum = Number(p.dia || p.DIA || 0);
+
+                    // Filtrar por Día de Tracking si está activo
+                    if (AppState.diaSeleccionado !== 'Todos') {
+                        if (diaNum !== Number(AppState.diaSeleccionado)) {
+                            return;
+                        }
+                    }
 
                     // Filtrar por Cantón si está activo (Cascada Cantón ➔ Puntos)
                     if (AppState.cantonSeleccionado !== 'Todos') {
@@ -2033,10 +2145,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     listaSectores.push({
                         sc: scNum,
                         scKey: scKey,
+                        dia: diaNum,
                         canton: canton,
                         etiqueta: etiqueta,
                         etiquetaKey: `${scNum}${tipologia}`,
-                        detalle: `${etiqueta} · ${parroquia}`,
+                        detalle: diaNum > 0 ? `D${diaNum} · ${etiqueta} · ${parroquia}` : `${etiqueta} · ${parroquia}`,
                         parroquia: parroquia
                     });
                 });
@@ -2145,6 +2258,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (cantActivo !== 'Todos' && c && c !== normStr(cantActivo)) {
                         return; // Omitir puntos de otros cantones
                     }
+                    // Filtrar por Día de Tracking si está activo
+                    if (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos') {
+                        if (Number(props.dia || props.DIA || 0) !== Number(AppState.diaSeleccionado)) {
+                            return;
+                        }
+                    }
                     // Filtrar por Circunscripción seleccionada
                     if (AppState.circunscripcionSeleccionada && AppState.circunscripcionSeleccionada !== 'Todas') {
                         const cSec = normCircunscripcion(props.circunscripcion || props.CIRCUNSCRIPCION || resolverCircunscripcionParroquia(props.parroquia));
@@ -2184,6 +2303,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (AppState.circunscripcionSeleccionada && AppState.circunscripcionSeleccionada !== 'Todas') {
                         const cPar = normCircunscripcion(props.circunscripcion || props.CIRCUNSCRIPCION || resolverCircunscripcionParroquia(p));
                         if (cPar !== normCircunscripcion(AppState.circunscripcionSeleccionada)) return;
+                    }
+                    if (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos' && !puntosPorParroquia.has(normStr(p))) {
+                        return;
                     }
                     if (p && !parList.includes(p)) parList.push(p);
                 });
@@ -2256,6 +2378,16 @@ document.addEventListener('DOMContentLoaded', () => {
             filtradas = filtradas.filter(e => {
                 const sup = String(e.supervisor || e.C_digo_Supervisor || campo(e, AppState.config.campoSupervisor) || '');
                 return sup === AppState.supervisorSeleccionado;
+            });
+        }
+
+        // Filtro por Día de Tracking (D1..D15)
+        if (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos') {
+            const targetDia = Number(AppState.diaSeleccionado);
+            filtradas = filtradas.filter(e => {
+                const sec = resolverSectorEncuesta(e);
+                if (!sec || !sec.props) return false;
+                return Number(sec.props.dia || sec.props.DIA || 0) === targetDia;
             });
         }
 
@@ -2631,13 +2763,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Crear colección de centroides puntuales para etiquetas únicas de sectores censales (evita duplicación por teselado en MapLibre)
+        const hayDiasTracking = (sectoresData.features || []).some(f => f.properties && Number(f.properties.dia || f.properties.DIA) > 0);
         const sectoresCentroidesData = {
             type: 'FeatureCollection',
             features: (sectoresData.features || []).map(f => {
                 const p = f.properties || {};
                 const scNum = String(p.num_muestra || p.NUM_MUESTRA || p.sc || p.codigo_muestra || '').trim();
                 const tip = String(p.tipologia || p.TIPOLOGIA || '').trim().toUpperCase();
+                const diaNum = Number(p.dia || p.DIA || 0);
                 const etiq = p.etiqueta || p.ETIQUETA || p.etiquetaSC || (scNum && tip ? `${scNum} | ${tip}` : (scNum || tip));
+                const etiqMapa = diaNum > 0 ? `D${diaNum} · ${etiq}` : etiq;
                 let coords = (f.geometry && f.geometry.type === 'Point') ? f.geometry.coordinates : p.centroid;
                 if (!coords || !Array.isArray(coords)) {
                     if (p.bbox && Array.isArray(p.bbox)) {
@@ -2657,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return {
                     type: 'Feature',
                     geometry: { type: 'Point', coordinates: coords },
-                    properties: { ...p, etiquetaSC: etiq, etiqueta: etiq, ETIQUETA: etiq, sc: scNum, num_muestra: scNum, NUM_MUESTRA: scNum, tipologia: tip, TIPOLOGIA: tip, circunscripcion: circ, CIRCUNSCRIPCION: circ }
+                    properties: { ...p, dia: diaNum, etiquetaMapa: etiqMapa, etiquetaSC: etiq, etiqueta: etiq, ETIQUETA: etiq, sc: scNum, num_muestra: scNum, NUM_MUESTRA: scNum, tipologia: tip, TIPOLOGIA: tip, circunscripcion: circ, CIRCUNSCRIPCION: circ }
                 };
             })
         };
@@ -2914,8 +3049,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         source: 'sectores-source',
                         filter: ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
                         paint: {
-                            'fill-color': EXPR_SECTORES_FILL,
-                            'fill-opacity': 0.20
+                            'fill-color': hayDiasTracking ? EXPR_SECTORES_DIA_COLOR : EXPR_SECTORES_FILL,
+                            'fill-opacity': hayDiasTracking ? 0.28 : 0.20
                         }
                     },
                     {
@@ -2924,7 +3059,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         source: 'sectores-source',
                         filter: ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
                         paint: {
-                            'line-color': EXPR_SECTORES_LINE,
+                            'line-color': hayDiasTracking ? EXPR_SECTORES_DIA_COLOR : EXPR_SECTORES_LINE,
                             'line-width': [
                                 'interpolate', ['linear'], ['zoom'],
                                 10, 2.0,
@@ -2961,7 +3096,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         source: 'sectores-centroides-source',
                         minzoom: 6.5,
                         layout: {
-                            'text-field': ['coalesce', ['get', 'etiquetaSC'], ['get', 'etiqueta'], ['get', 'ETIQUETA'], ''],
+                            'text-field': ['coalesce', ['get', 'etiquetaMapa'], ['get', 'etiquetaSC'], ['get', 'etiqueta'], ['get', 'ETIQUETA'], ''],
                             'text-font': ['Open Sans Bold'],
                             'text-size': [
                                 'interpolate', ['linear'], ['zoom'],
@@ -2976,7 +3111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             'visibility': 'visible'
                         },
                         paint: {
-                            'text-color': ['coalesce', ['get', 'color_clima'], EXPR_SECTORES_LABEL],
+                            'text-color': ['coalesce', ['get', 'color_clima'], hayDiasTracking ? EXPR_SECTORES_DIA_COLOR : EXPR_SECTORES_LABEL],
                             'text-halo-color': '#ffffff',
                             'text-halo-width': 3.0
                         }
@@ -3704,6 +3839,40 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
+    function obtenerBboxDia(diaNum) {
+        if (!diaNum || diaNum === 'Todos') return AppState.cantonBbox;
+        const targetDia = Number(diaNum);
+        if (!Number.isFinite(targetDia) || targetDia <= 0) return AppState.cantonBbox;
+        if (AppState.sectoresGeojson && AppState.sectoresGeojson.features) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            let encontrados = 0;
+            AppState.sectoresGeojson.features.forEach(f => {
+                const p = f.properties || {};
+                const d = Number(p.dia || 0);
+                if (d === targetDia) {
+                    const b = p.bbox || (f.geometry ? calcularBBOX(f.geometry) : null);
+                    if (b) {
+                        encontrados++;
+                        const bMinX = Array.isArray(b[0]) ? b[0][0] : b[0];
+                        const bMinY = Array.isArray(b[0]) ? b[0][1] : b[1];
+                        const bMaxX = Array.isArray(b[1]) ? b[1][0] : b[2];
+                        const bMaxY = Array.isArray(b[1]) ? b[1][1] : b[3];
+                        if (bMinX < minX) minX = bMinX;
+                        if (bMinY < minY) minY = bMinY;
+                        if (bMaxX > maxX) maxX = bMaxX;
+                        if (bMaxY > maxY) maxY = bMaxY;
+                    }
+                }
+            });
+            if (encontrados > 0 && minX !== Infinity) {
+                const dx = (maxX - minX) * 0.12 || 0.005;
+                const dy = (maxY - minY) * 0.12 || 0.005;
+                return [[minX - dx, minY - dy], [maxX + dx, maxY + dy]];
+            }
+        }
+        return AppState.cantonBbox;
+    }
+
     function obtenerBboxCanton(nombreCanton) {
         if (!nombreCanton || nombreCanton === 'Todos') return AppState.cantonBbox;
         const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
@@ -3944,9 +4113,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 baseTerritorialFilter = ['==', ['upcase', ['coalesce', ['get', 'canton'], ['get', 'CANTON'], '']], targetCan];
             }
 
-            const filterGeneral = (baseTerritorialFilter && filterPendientes)
-                ? ['all', baseTerritorialFilter, filterPendientes]
-                : (baseTerritorialFilter || filterPendientes || null);
+            const filterDia = (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos')
+                ? ['==', ['to-number', ['coalesce', ['get', 'dia'], 0]], Number(AppState.diaSeleccionado)]
+                : null;
+
+            const filtrosActivos = [baseTerritorialFilter, filterPendientes, filterDia].filter(Boolean);
+            const filterGeneral = filtrosActivos.length > 1
+                ? ['all', ...filtrosActivos]
+                : (filtrosActivos[0] || null);
 
             const filterPoly = filterGeneral 
                 ? ['all', ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']], filterGeneral] 
@@ -3997,7 +4171,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const etiq = sectorMeta.etiquetaSC || `Sector ${targetSC}`;
                     const parr = sectorMeta.parroquia ? sectorMeta.parroquia : '';
                     const puntoRef = p.punto_referencial || p.PUNTO_REFERENCIAL || '';
-                    titulo.textContent = `Sector ${etiq}${puntoRef ? ` · ${puntoRef}` : (parr ? ` (${parr})` : '')}`;
+                    const diaBadge = (p.dia && Number(p.dia) > 0) ? `Día ${p.dia} · ` : '';
+                    titulo.textContent = `${diaBadge}Sector ${etiq}${puntoRef ? ` · ${puntoRef}` : (parr ? ` (${parr})` : '')}`;
 
                     let lat = null, lng = null;
                     if (sectorMeta.centroid && Array.isArray(sectorMeta.centroid)) {
@@ -4024,15 +4199,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     popupSectorActivo = null;
                 }
 
+                const usarColoresDia = AppState.diasDisponibles && AppState.diasDisponibles.length > 0;
                 if (map.getLayer('sectores-fill')) {
                     map.setFilter('sectores-fill', filterPoly);
-                    map.setPaintProperty('sectores-fill', 'fill-color', EXPR_SECTORES_FILL);
+                    map.setPaintProperty('sectores-fill', 'fill-color', usarColoresDia ? EXPR_SECTORES_DIA_COLOR : EXPR_SECTORES_FILL);
                     map.setPaintProperty('sectores-fill', 'fill-opacity', 0.20);
                 }
 
                 if (map.getLayer('sectores-line')) {
                     map.setFilter('sectores-line', filterPoly);
-                    map.setPaintProperty('sectores-line', 'line-color', EXPR_SECTORES_LINE);
+                    map.setPaintProperty('sectores-line', 'line-color', usarColoresDia ? EXPR_SECTORES_DIA_COLOR : EXPR_SECTORES_LINE);
                     map.setPaintProperty('sectores-line', 'line-width', [
                         'interpolate', ['linear'], ['zoom'],
                         10, 2.0,
@@ -4048,7 +4224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (map.getLayer('sectores-label')) {
                     map.setFilter('sectores-label', filterGeneral);
-                    map.setPaintProperty('sectores-label', 'text-color', EXPR_SECTORES_LABEL);
+                    map.setPaintProperty('sectores-label', 'text-color', usarColoresDia ? EXPR_SECTORES_DIA_COLOR : EXPR_SECTORES_LABEL);
                 }
             }
         }
@@ -4097,6 +4273,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const bboxCirc = obtenerBboxCircunscripcion(AppState.circunscripcionSeleccionada);
                 if (bboxCirc) {
                     map.fitBounds(bboxCirc, {
+                        padding: { top: 45, bottom: 45, left: 45, right: 45 },
+                        maxZoom: 14.5,
+                        duration: 850
+                    });
+                }
+            } else if (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos') {
+                // Nivel 2.75: Zoom a los sectores del Día de Tracking seleccionado
+                const bboxDia = obtenerBboxDia(AppState.diaSeleccionado);
+                if (bboxDia) {
+                    map.fitBounds(bboxDia, {
                         padding: { top: 45, bottom: 45, left: 45, right: 45 },
                         maxZoom: 14.5,
                         duration: 850
@@ -5469,12 +5655,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // 4.2 Filtro Día de Tracking (Dropdown + Pills)
+        if (UI.diaFilter) {
+            UI.diaFilter.addEventListener('change', (e) => {
+                AppState.diaSeleccionado = e.target.value || 'Todos';
+                AppState.sectorSeleccionado = 'Todos';
+                poblarFiltros();
+                renderizarVista(false, true);
+            });
+        }
+        if (UI.trackingDayStrip) {
+            UI.trackingDayStrip.addEventListener('click', (e) => {
+                const pill = e.target.closest('.cs-tracking-day-pill');
+                if (!pill) return;
+                AppState.diaSeleccionado = pill.dataset.dia || 'Todos';
+                AppState.sectorSeleccionado = 'Todos';
+                poblarFiltros();
+                renderizarVista(false, true);
+            });
+        }
+
         // 5. Limpiar Filtros
         if (UI.btnLimpiarFiltros) {
             UI.btnLimpiarFiltros.addEventListener('click', () => {
                 AppState.supervisorSeleccionado = 'Todos';
                 AppState.cantonSeleccionado = 'Todos';
                 AppState.circunscripcionSeleccionada = 'Todas';
+                AppState.diaSeleccionado = 'Todos';
                 AppState.sectorSeleccionado = 'Todos';
                 AppState.parroquiaSeleccionada = 'Todas';
                 AppState.fechaSeleccionada = 'Todas';

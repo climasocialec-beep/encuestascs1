@@ -1,11 +1,11 @@
 {
-  "estado": "STANDBY",
-  "version": "2.2.2",
-  "proyecto": "Encuesta Quito Oct 2026",
+  "estado": "ACTIVO",
+  "version": "2.3.0",
+  "proyecto": "Tracking Poll Quito Nov 2026",
   "canton": "QUITO",
   "provincia": "Pichincha",
   "modalidad": "sectores",
-  "meta": 1200,
+  "meta": 2550,
   "bounds": [
     [-78.62, -0.48],
     [-78.25, 0.08]
@@ -13,16 +13,16 @@
   "kobo": {
     "formularios": [
       {
-        "id": "air8SfYA8VFgf2x9muBo6r",
-        "asset_id": "air8SfYA8VFgf2x9muBo6r",
-        "nombre": "ENCUESTA CANTÓN QUITO - NOVIEMBRE 2026",
+        "id": "atEpQptwTpdr8v5yhWZufq",
+        "asset_id": "atEpQptwTpdr8v5yhWZufq",
+        "nombre": "FormularioTracking Quito",
         "activo": true
       }
     ],
-    "asset_id": "air8SfYA8VFgf2x9muBo6r",
+    "asset_id": "atEpQptwTpdr8v5yhWZufq",
     "api_token": "07cf361cc0dcfc56f489d599435c8e0ed6ce9387",
-    "campo_encuestador": "cod_enc",
-    "campo_supervisor": "cod_sup",
+    "campo_encuestador": "cencu",
+    "campo_supervisor": "csup",
     "choices_parroquias": {
       "7135": "CARCELEN",
       "7145": "COCHAPAMBA",
