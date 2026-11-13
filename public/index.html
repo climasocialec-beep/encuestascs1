@@ -25,15 +25,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 
   <!-- Preload Cartografía Clave (Caché optimizada para móviles) -->
-  <link rel="preload" href="assets/circunscripciones.geojson?v=2.3.1" as="fetch" crossorigin>
-  <link rel="preload" href="assets/parroquias.geojson?v=2.3.1" as="fetch" crossorigin>
-  <link rel="preload" href="assets/sectores_censales.geojson?v=2.3.1" as="fetch" crossorigin>
+  <link rel="preload" href="assets/circunscripciones.geojson?v=2.3.2" as="fetch" crossorigin>
+  <link rel="preload" href="assets/parroquias.geojson?v=2.3.2" as="fetch" crossorigin>
+  <link rel="preload" href="assets/sectores_censales.geojson?v=2.3.2" as="fetch" crossorigin>
 
   <!-- MapLibre GL CSS (Aceleración WebGL Nativa en GPU) -->
   <link rel="stylesheet" href="libs/maplibre-gl.css" />
 
   <!-- Estilos del Dashboard -->
-  <link rel="stylesheet" href="style.css?v=2.3.1">
+  <link rel="stylesheet" href="style.css?v=2.3.2">
 </head>
 <body>
 
@@ -211,7 +211,7 @@
 
         <div class="cs-ribbon-grid">
           <!-- Supervisor -->
-          <div class="cs-ribbon-field">
+          <div class="cs-ribbon-field" id="wrapSupervisorFilter" style="display:none;">
             <label for="supervisorFilter" class="cs-field-label">
               <svg class="cs-icon cs-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span>Supervisor</span>
@@ -225,7 +225,7 @@
 
 
           <!-- Cantón -->
-          <div class="cs-ribbon-field" id="wrapCantonFilter">
+          <div class="cs-ribbon-field" id="wrapCantonFilter" style="display:none;">
             <label for="cantonFilter" class="cs-field-label">
               <svg class="cs-icon cs-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <span>Cantón</span>
@@ -534,10 +534,10 @@
 
   <!-- ===== SCRIPTS ===== -->
   <script src="libs/maplibre-gl.js"></script>
-  <script src="js/tipologias.js?v=2.3.1"></script>
-  <script src="js/kobo-parser.js?v=2.3.1"></script>
-  <script src="js/auditoria.js?v=2.3.1"></script>
-  <script src="script.js?v=2.3.1"></script>
+  <script src="js/tipologias.js?v=2.3.2"></script>
+  <script src="js/kobo-parser.js?v=2.3.2"></script>
+  <script src="js/auditoria.js?v=2.3.2"></script>
+  <script src="script.js?v=2.3.2"></script>
   <script>
     if ('serviceWorker' in navigator) {
       let refreshing = false;
@@ -553,13 +553,13 @@
         if ('caches' in window) {
           caches.keys().then(names => {
             names.forEach(name => {
-              if (name !== 'clima-social-quito-oct2026-v2.3.1') {
+              if (name !== 'clima-social-quito-oct2026-v2.3.2') {
                 caches.delete(name);
               }
             });
           });
         }
-        navigator.serviceWorker.register('/service-worker.js?v=2.3.1').then(reg => {
+        navigator.serviceWorker.register('/service-worker.js?v=2.3.2').then(reg => {
           if (!reg) return;
           if (reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
