@@ -2553,7 +2553,27 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // 4. Ámbito General (Imbabura)
+        // 3. Filtro por Día de Tracking
+        if (AppState.diaSeleccionado && AppState.diaSeleccionado !== 'Todos') {
+            const targetDia = Number(AppState.diaSeleccionado);
+            let numSectoresDia = 0;
+            if (AppState.sectoresGeojson && Array.isArray(AppState.sectoresGeojson.features)) {
+                numSectoresDia = AppState.sectoresGeojson.features.filter(f => {
+                    const props = f.properties || {};
+                    return Number(props.dia || props.DIA || 0) === targetDia;
+                }).length;
+            }
+            const metaDia = numSectoresDia > 0 ? numSectoresDia * 10 : 170;
+            return {
+                meta: metaDia,
+                etiquetaMeta: `Meta: ${metaDia.toLocaleString()} (Día ${targetDia})`,
+                subPendientes: `Faltan para la meta del Día ${targetDia}`,
+                tituloAvance: `Avance Día ${targetDia}`,
+                subAvance: `${numSectoresDia || 17} sectores (${metaDia.toLocaleString()} encuestas)`
+            };
+        }
+
+        // 4. Ámbito General (Pichincha)
         const metaGeneral = AppState.config.meta || AppState.config.metaEncuestas || 1900;
         const provLabel = AppState.config.provincia || 'Imbabura';
         return {
@@ -2573,23 +2593,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const infoMeta = obtenerMetaActiva();
         const meta = infoMeta.meta;
         
-        const hoyStr = obtenerFechaLocalEcuador();
-        const hoy = encuestas.filter(e => {
-            const fecha = obtenerFechaEncuesta(e);
-            return fecha === hoyStr;
-        }).length;
+        const ahora = new Date();
+        const hoyStr = obtenerFechaLocalEcuador(ahora);
+        const ayerStr = obtenerFechaLocalEcuador(new Date(ahora.getTime() - 86400000));
+        const anteayerStr = obtenerFechaLocalEcuador(new Date(ahora.getTime() - 2 * 86400000));
+        const fechas3Dias = new Set([hoyStr, ayerStr, anteayerStr]);
+
+        const hoy = encuestas.filter(e => obtenerFechaEncuesta(e) === hoyStr).length;
+        const acum3Dias = encuestas.filter(e => fechas3Dias.has(obtenerFechaEncuesta(e))).length;
+
+        const metaDiaria = (AppState.config && AppState.config.meta_diaria) || 170;
+        const meta3Dias = (AppState.config && AppState.config.meta_3_dias) || 510;
+        const pctHoy = metaDiaria > 0 ? ((hoy / metaDiaria) * 100).toFixed(1) : '0.0';
+        const pct3Dias = meta3Dias > 0 ? ((acum3Dias / meta3Dias) * 100).toFixed(1) : '0.0';
         
         const pendientes = Math.max(0, meta - total);
         const avancePorcentaje = meta > 0 ? ((total / meta) * 100).toFixed(1) : '0.0';
 
         animarNumero(UI.kpiTotal, total);
         animarNumero(UI.kpiHoy, hoy);
+        animarNumero(document.getElementById('kpi3Dias'), acum3Dias);
         animarNumero(UI.kpiPendientes, pendientes);
         
         if (UI.kpiMeta) UI.kpiMeta.textContent = infoMeta.etiquetaMeta;
         if (UI.kpiSubPendientes) UI.kpiSubPendientes.textContent = infoMeta.subPendientes;
         if (UI.kpiTituloAvance) UI.kpiTituloAvance.textContent = infoMeta.tituloAvance;
         if (UI.kpiSubAvance) UI.kpiSubAvance.textContent = infoMeta.subAvance;
+
+        const kpiSubHoy = document.getElementById('kpiSubHoy');
+        const barraHoy = document.getElementById('barraHoy');
+        if (kpiSubHoy) kpiSubHoy.textContent = `Meta diaria: ${metaDiaria} (${pctHoy}%)`;
+        if (barraHoy) barraHoy.style.width = `${Math.min(100, parseFloat(pctHoy))}%`;
+
+        const kpiSub3Dias = document.getElementById('kpiSub3Dias');
+        const barra3Dias = document.getElementById('barra3Dias');
+        if (kpiSub3Dias) kpiSub3Dias.textContent = `Meta 3 días: ${meta3Dias} (${pct3Dias}%)`;
+        if (barra3Dias) barra3Dias.style.width = `${Math.min(100, parseFloat(pct3Dias))}%`;
         
         if (UI.kpiAvance) UI.kpiAvance.textContent = `${avancePorcentaje}%`;
         if (UI.barraAvance) UI.barraAvance.style.width = `${Math.min(100, parseFloat(avancePorcentaje))}%`;

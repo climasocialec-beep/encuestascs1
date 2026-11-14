@@ -604,6 +604,19 @@ body.modo-oscuro .cs-btn-icon:hover {
 .cs-kpi-card--purple .cs-kpi-icon-wrap { background-color: var(--cs-indigo-light); color: var(--cs-indigo); }
 .cs-kpi-card--purple .cs-kpi-card__value { color: var(--cs-indigo); }
 
+.cs-kpi-card--blue .cs-kpi-icon-wrap { background-color: #eff6ff; color: #2563eb; }
+.cs-kpi-card--blue .cs-kpi-card__value { color: #2563eb; }
+
+.cs-kpi-denom {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  margin-left: 0.25rem;
+}
+
+.cs-progress-bar__fill--green { background: linear-gradient(90deg, #10b981, #059669) !important; }
+.cs-progress-bar__fill--blue { background: linear-gradient(90deg, #3b82f6, #2563eb) !important; }
+
 /* Barra de Progreso Elegante */
 .cs-progress-bar {
   position: absolute;

@@ -9,8 +9,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Panel de Supervisión de Campo en tiempo real — Clima Social Quito Oct 2026">
-  <title>Clima Social · Tracking Poll Quito Nov 2026</title>
+  <meta name="description" content="Panel de Supervisión de Campo en tiempo real — Clima Social Pichincha Nov 2026">
+  <title>Clima Social · Tracking Poll Pichincha Nov 2026</title>
   <link rel="icon" type="image/png" href="assets/icono.png">
   <link rel="manifest" href="manifest.webmanifest">
 
@@ -25,15 +25,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 
   <!-- Preload Cartografía Clave (Caché optimizada para móviles) -->
-  <link rel="preload" href="assets/circunscripciones.geojson?v=2.3.9" as="fetch" crossorigin>
-  <link rel="preload" href="assets/parroquias.geojson?v=2.3.9" as="fetch" crossorigin>
-  <link rel="preload" href="assets/sectores_censales.geojson?v=2.3.9" as="fetch" crossorigin>
+  <link rel="preload" href="assets/circunscripciones.geojson?v=2.4.0" as="fetch" crossorigin>
+  <link rel="preload" href="assets/parroquias.geojson?v=2.4.0" as="fetch" crossorigin>
+  <link rel="preload" href="assets/sectores_censales.geojson?v=2.4.0" as="fetch" crossorigin>
 
   <!-- MapLibre GL CSS (Aceleración WebGL Nativa en GPU) -->
   <link rel="stylesheet" href="libs/maplibre-gl.css" />
 
   <!-- Estilos del Dashboard -->
-  <link rel="stylesheet" href="style.css?v=2.3.9">
+  <link rel="stylesheet" href="style.css?v=2.4.0">
 </head>
 <body>
 
@@ -143,7 +143,7 @@
         </div>
         <div class="cs-kpi-bottom">
           <span class="cs-kpi-badge">Total Recolectadas</span>
-          <span class="cs-kpi-sub" id="kpiMeta">Meta: 2,550 (Quito)</span>
+          <span class="cs-kpi-sub" id="kpiMeta">Meta: 2,550 (Pichincha)</span>
         </div>
         <div class="cs-progress-bar"><div class="cs-progress-bar__fill" id="barraAvance" style="width:0%"></div></div>
       </div>
@@ -154,13 +154,30 @@
             <svg class="cs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
           <div class="cs-kpi-figure">
-            <span class="cs-kpi-card__value" id="kpiHoy">0</span>
+            <span class="cs-kpi-card__value" id="kpiHoy">0</span><span class="cs-kpi-denom" id="kpiMetaHoy">/ 170</span>
           </div>
         </div>
         <div class="cs-kpi-bottom">
-          <span class="cs-kpi-badge">Encuestas Hoy</span>
-          <span class="cs-kpi-sub">Jornada actual</span>
+          <span class="cs-kpi-badge">Avance Diario</span>
+          <span class="cs-kpi-sub" id="kpiSubHoy">Meta diaria: 170 (0.0%)</span>
         </div>
+        <div class="cs-progress-bar"><div class="cs-progress-bar__fill cs-progress-bar__fill--green" id="barraHoy" style="width:0%"></div></div>
+      </div>
+
+      <div class="cs-kpi-card cs-kpi-card--blue">
+        <div class="cs-kpi-top">
+          <div class="cs-kpi-icon-wrap">
+            <svg class="cs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="cs-kpi-figure">
+            <span class="cs-kpi-card__value" id="kpi3Dias">0</span><span class="cs-kpi-denom" id="kpiMeta3Dias">/ 510</span>
+          </div>
+        </div>
+        <div class="cs-kpi-bottom">
+          <span class="cs-kpi-badge">Acumulado 3 Días</span>
+          <span class="cs-kpi-sub" id="kpiSub3Dias">Meta 3 días: 510 (0.0%)</span>
+        </div>
+        <div class="cs-progress-bar"><div class="cs-progress-bar__fill cs-progress-bar__fill--blue" id="barra3Dias" style="width:0%"></div></div>
       </div>
 
       <div class="cs-kpi-card cs-kpi-card--amber">
@@ -174,7 +191,7 @@
         </div>
         <div class="cs-kpi-bottom">
           <span class="cs-kpi-badge">Pendientes</span>
-          <span class="cs-kpi-sub" id="kpiSubPendientes">Faltan para la meta</span>
+          <span class="cs-kpi-sub" id="kpiSubPendientes">Faltan para la meta provincial</span>
         </div>
       </div>
 
@@ -189,7 +206,7 @@
         </div>
         <div class="cs-kpi-bottom">
           <span class="cs-kpi-badge" id="kpiTituloAvance">Avance General</span>
-          <span class="cs-kpi-sub" id="kpiSubAvance">Cumplimiento cantonal (2,550)</span>
+          <span class="cs-kpi-sub" id="kpiSubAvance">Cumplimiento provincial (2,550)</span>
         </div>
       </div>
 
@@ -534,10 +551,10 @@
 
   <!-- ===== SCRIPTS ===== -->
   <script src="libs/maplibre-gl.js"></script>
-  <script src="js/tipologias.js?v=2.3.9"></script>
-  <script src="js/kobo-parser.js?v=2.3.9"></script>
-  <script src="js/auditoria.js?v=2.3.9"></script>
-  <script src="script.js?v=2.3.9"></script>
+  <script src="js/tipologias.js?v=2.4.0"></script>
+  <script src="js/kobo-parser.js?v=2.4.0"></script>
+  <script src="js/auditoria.js?v=2.4.0"></script>
+  <script src="script.js?v=2.4.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       let refreshing = false;
@@ -553,13 +570,13 @@
         if ('caches' in window) {
           caches.keys().then(names => {
             names.forEach(name => {
-              if (name !== 'clima-social-quito-oct2026-v2.3.9') {
+              if (name !== 'clima-social-quito-oct2026-v2.4.0') {
                 caches.delete(name);
               }
             });
           });
         }
-        navigator.serviceWorker.register('/service-worker.js?v=2.3.9').then(reg => {
+        navigator.serviceWorker.register('/service-worker.js?v=2.4.0').then(reg => {
           if (!reg) return;
           if (reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
