@@ -607,6 +607,32 @@ body.modo-oscuro .cs-btn-icon:hover {
 .cs-kpi-card--blue .cs-kpi-icon-wrap { background-color: #eff6ff; color: #2563eb; }
 .cs-kpi-card--blue .cs-kpi-card__value { color: #2563eb; }
 
+.cs-kpi-micro {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cs-kpi-micro svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+.cs-kpi-micro--donut svg {
+  width: 30px;
+  height: 30px;
+}
+.cs-kpi-donut circle {
+  transition: stroke-dashoffset 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cs-kpi-card--teal .cs-kpi-micro { color: var(--cs-teal); }
+.cs-kpi-card--green .cs-kpi-micro { color: var(--cs-green); }
+.cs-kpi-card--blue .cs-kpi-micro { color: #2563eb; }
+.cs-kpi-card--amber .cs-kpi-micro { color: var(--cs-amber); }
+.cs-kpi-card--purple .cs-kpi-micro { color: var(--cs-indigo); }
+
 .cs-kpi-denom {
   font-size: 0.85rem;
   font-weight: 700;
