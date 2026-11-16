@@ -1408,7 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.title = 'Clima Social · ' + nom;
 
         const meta = AppState.config.meta || AppState.config.metaEncuestas || 1900;
-        const cantProv = AppState.config.provincia || AppState.config.canton || 'Imbabura';
+        const cantProv = AppState.config.canton === 'QUITO' ? 'Quito' : (AppState.config.provincia || AppState.config.canton || 'Quito');
         if (UI.kpiMeta) {
             UI.kpiMeta.textContent = `Meta: ${meta.toLocaleString()} (${cantProv})`;
         }
@@ -2573,15 +2573,15 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // 4. Ámbito General (Pichincha)
+        // 4. Ámbito General (Quito)
         const metaGeneral = AppState.config.meta || AppState.config.metaEncuestas || 1900;
-        const provLabel = AppState.config.provincia || 'Imbabura';
+        const provLabel = AppState.config.canton === 'QUITO' ? 'Quito' : (AppState.config.provincia || 'Quito');
         return {
             meta: metaGeneral,
             etiquetaMeta: `Meta: ${metaGeneral.toLocaleString()} (${provLabel})`,
-            subPendientes: `Faltan para la meta provincial`,
+            subPendientes: `Faltan para la meta cantonal`,
             tituloAvance: `Avance General`,
-            subAvance: `Cumplimiento provincial (${metaGeneral.toLocaleString()})`
+            subAvance: `Cumplimiento cantonal (${metaGeneral.toLocaleString()})`
         };
     }
 
