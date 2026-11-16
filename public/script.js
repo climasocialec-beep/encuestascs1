@@ -1344,10 +1344,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             await cargarDatos(AppState.encuestas.length === 0, true);
             
-            window.addEventListener('online', () => cargarDatos(false));
+            window.addEventListener('online', () => cargarDatos(false, true));
 
-            // Auto-refresco inteligente (pausa si la pantalla se apaga o se cambia de app)
-            AppState.intervaloPolling = setInterval(() => cargarDatos(false), 180000);
+            // Auto-refresco inteligente (cada 45 s en primer plano; pausa si se oculta la app)
+            AppState.intervaloPolling = setInterval(() => cargarDatos(false, true), 45000);
             
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) {
@@ -1359,9 +1359,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         setTimeout(() => map.resize(), 100);
                         setTimeout(() => map.resize(), 500);
                     }
-                    cargarDatos(false);
+                    cargarDatos(false, true);
                     if (!AppState.intervaloPolling) {
-                        AppState.intervaloPolling = setInterval(() => cargarDatos(false), 180000);
+                        AppState.intervaloPolling = setInterval(() => cargarDatos(false, true), 45000);
                     }
                 }
             });

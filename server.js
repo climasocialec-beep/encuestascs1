@@ -103,7 +103,7 @@ function obtenerParametrosActivos() {
 }
 
 const LIMITE_POR_PAGINA = 3000;
-const CACHE_TTL_MS = (Number(process.env.CACHE_TTL_SEGUNDOS) || 90) * 1000;
+const CACHE_TTL_MS = (Number(process.env.CACHE_TTL_SEGUNDOS) || 30) * 1000;
 const TIMEOUT_MS = 30000;
 
 // Log inicial
@@ -455,7 +455,7 @@ app.get("/api/encuestas", async (req, res) => {
             "Pragma": "no-cache",
             "Expires": "0"
         });
-        if (req.query.fresh === "1") {
+        if (req.query.fresh === "1" || req.query.refresh === "1") {
             cache.datos = null;
             cache.timestamp = 0;
         }
