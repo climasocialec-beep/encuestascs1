@@ -1,6 +1,6 @@
 {
   "estado": "ACTIVO",
-  "version": "2.4.4",
+  "version": "2.4.5",
   "proyecto": "Tracking Poll Quito Nov 2026",
   "canton": "QUITO",
   "provincia": "Pichincha",
@@ -8,6 +8,7 @@
   "meta": 2550,
   "meta_diaria": 170,
   "meta_3_dias": 510,
+  "fecha_inicio": "2026-11-14",
   "bounds": [
     [-78.62, -0.48],
     [-78.25, 0.08]

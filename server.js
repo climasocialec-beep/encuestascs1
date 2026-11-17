@@ -448,6 +448,9 @@ app.get("/api/config", (req, res) => {
         provincia: cfg.provincia || "",
         modalidad: cfg.modalidad || "sectores",
         meta: Number(cfg.meta) || 500,
+        meta_diaria: Number(cfg.meta_diaria) || 170,
+        meta_3_dias: Number(cfg.meta_3_dias) || 510,
+        fecha_inicio: cfg.fecha_inicio || "2026-11-14",
         bounds: cfg.bounds || null,
         equipo: cfg.equipo || { supervisores: {}, encuestadores: {} },
         kobo: {

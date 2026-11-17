@@ -2595,9 +2595,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const ahora = new Date();
         const hoyStr = obtenerFechaLocalEcuador(ahora);
-        const ayerStr = obtenerFechaLocalEcuador(new Date(ahora.getTime() - 86400000));
-        const anteayerStr = obtenerFechaLocalEcuador(new Date(ahora.getTime() - 2 * 86400000));
-        const fechas3Dias = new Set([hoyStr, ayerStr, anteayerStr]);
+
+        // Bloques fijos de 3 días (se reinicia cada 3 días: D1-3, D4-6, D7-9, D10-12, D13-15)
+        const fechaInicioStr = (AppState.config && AppState.config.fecha_inicio) || '2026-11-14';
+        const parseYMD = (s) => {
+            const [y, m, d] = String(s).split('-').map(Number);
+            return Date.UTC(y, (m || 1) - 1, d || 1);
+        };
+        const msDia = 86400000;
+        const inicioMs = parseYMD(fechaInicioStr);
+        const hoyMs = parseYMD(hoyStr);
+        const diaIdx = Math.max(0, Math.floor((hoyMs - inicioMs) / msDia));
+        const bloqueIdx = Math.floor(diaIdx / 3);
+        const bloqueIniDia = bloqueIdx * 3 + 1;
+        const bloqueFinDia = bloqueIniDia + 2;
+        const fechas3Dias = new Set();
+        for (let offset = 0; offset < 3; offset++) {
+            const dMs = inicioMs + (bloqueIdx * 3 + offset) * msDia;
+            fechas3Dias.add(new Date(dMs).toISOString().slice(0, 10));
+        }
 
         const hoy = encuestas.filter(e => obtenerFechaEncuesta(e) === hoyStr).length;
         const acum3Dias = encuestas.filter(e => fechas3Dias.has(obtenerFechaEncuesta(e))).length;
@@ -2627,7 +2643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const kpiSub3Dias = document.getElementById('kpiSub3Dias');
         const barra3Dias = document.getElementById('barra3Dias');
-        if (kpiSub3Dias) kpiSub3Dias.textContent = `Meta 3 días: ${meta3Dias} (${pct3Dias}%)`;
+        if (kpiSub3Dias) kpiSub3Dias.textContent = `Días ${bloqueIniDia}–${bloqueFinDia} · Meta ${meta3Dias} (${pct3Dias}%)`;
         if (barra3Dias) barra3Dias.style.width = `${Math.min(100, parseFloat(pct3Dias))}%`;
         
         if (UI.kpiAvance) UI.kpiAvance.textContent = `${avancePorcentaje}%`;
