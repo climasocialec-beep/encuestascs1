@@ -272,6 +272,14 @@ function normalizarEncuesta(raw, params) {
         genero = "Otro";
     }
 
+    const rawSexoBio = extraerValor(raw, ["p1_1", "sexo_biologico", "sexo_bio"]) || "";
+    let sexo_biologico = "";
+    if (rawSexoBio === "1" || rawSexoBio.toLowerCase().includes("masc") || rawSexoBio.toLowerCase().includes("hombre")) {
+        sexo_biologico = "Hombre";
+    } else if (rawSexoBio === "2" || rawSexoBio.toLowerCase().includes("fem") || rawSexoBio.toLowerCase().includes("mujer")) {
+        sexo_biologico = "Mujer";
+    }
+
     const edadRaw = extraerValor(raw, [
         "p2", "edad", "p_edad", "age",
         "2. ¿CUÁL ES SU EDAD? (edad cumplida en años)",
@@ -303,6 +311,7 @@ function normalizarEncuesta(raw, params) {
         canton,
         circunscripcion,
         genero,
+        sexo_biologico,
         edad,
         consentimiento,
         consen: rawConsen || (noConsent ? "2" : "1")
